@@ -5,6 +5,18 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * shadcnblocks blocks all lay out inside `container`. Tailwind v4 ships that
+ * utility with breakpoint max-widths but no centering and no gutter, so
+ * without this every marketing section would run flush to the phone bezel.
+ * Capping it here also keeps body measure readable on wide monitors.
+ */
+@utility container {
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+    max-width: 72rem;
+}
+
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: 'Geist Variable', sans-serif;

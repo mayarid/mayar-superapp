@@ -16,3 +16,6 @@ todos.json
 
 # typescript
 *.tsbuildinfo
+
+# Claude Code scaffolding: local permissions and a machine-specific dev-server port.
+.claude/
