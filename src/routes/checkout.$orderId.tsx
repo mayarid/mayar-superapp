@@ -162,9 +162,18 @@ function CheckoutStatusPage() {
           {order.status === "pending" || order.status === "created" ? (
             <div className="flex flex-col gap-3">
               {order.payUrl ? (
-                <Button render={<a href={order.payUrl} />}>
+                <Button
+                  variant="outline"
+                  render={
+                    <a
+                      href={order.payUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    />
+                  }
+                >
                   <ExternalLinkIcon data-icon="inline-start" />
-                  Buka halaman pembayaran
+                  Buka lagi halaman pembayaran
                 </Button>
               ) : null}
               <Button
@@ -277,8 +286,8 @@ const TITLES: Record<OrderView["status"], string> = {
 }
 
 const DESCRIPTIONS: Record<OrderView["status"], string> = {
-  created: "Pesanan sudah dibuat. Selesaikan pembayaran di halaman Mayar.",
-  pending: "Pesanan sudah dibuat. Selesaikan pembayaran di halaman Mayar.",
+  created: "Selesaikan pembayaran di tab sebelah. Halaman ini menunggu.",
+  pending: "Selesaikan pembayaran di tab sebelah. Halaman ini menunggu.",
   paid: "Uangnya sudah masuk dan pesanan ini sudah dipenuhi.",
   expired: "Batas waktu pembayaran lewat sebelum uang masuk.",
   ambiguous: "Pencocokan menemukan lebih dari satu kandidat.",

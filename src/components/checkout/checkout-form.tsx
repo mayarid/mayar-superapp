@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "@tanstack/react-router"
 import { CheckIcon, TicketIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -28,6 +29,7 @@ interface CouponState {
 }
 
 export function CheckoutForm({ product }: { product: DemoProduct }) {
+  const navigate = useNavigate()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [mobile, setMobile] = useState("")
@@ -82,6 +84,12 @@ export function CheckoutForm({ product }: { product: DemoProduct }) {
     setSubmitting(true)
     setFormError(null)
 
+    // Opened synchronously, inside the click, and pointed at the real URL once
+    // the server answers. A browser only grants window.open during a user
+    // gesture, and awaiting the fetch first would spend that gesture and get
+    // the popup blocked.
+    const payWindow = window.open("about:blank", "_blank")
+
     try {
       const response = await fetch("/api/checkout", {
         method: "POST",
@@ -101,17 +109,31 @@ export function CheckoutForm({ product }: { product: DemoProduct }) {
       }>()
 
       if (!response.ok || !data.payUrl || !data.orderId) {
+        payWindow?.close()
         setFormError(data.error ?? "Checkout gagal. Coba lagi.")
         setSubmitting(false)
         return
       }
 
-      // Remember the order so the visitor can find it again after paying on
-      // Mayar's page. There is no redirectUrl on this endpoint, so nothing
-      // brings them back automatically.
+      // Kept so the order is reachable again if every tab is closed. Mayar
+      // cannot send the buyer back on its own — see docs/api-findings.md.
       localStorage.setItem(LAST_ORDER_KEY, data.orderId)
-      window.location.href = data.payUrl
+
+      if (payWindow && !payWindow.closed) {
+        payWindow.opener = null
+        payWindow.location.replace(data.payUrl)
+        // This tab stays alive and watches the order, so it can advance to the
+        // receipt by itself the moment the payment lands.
+        await navigate({
+          to: "/checkout/$orderId",
+          params: { orderId: data.orderId },
+        })
+      } else {
+        // Popup blocked. Fall back to this tab; the buyer returns by hand.
+        window.location.href = data.payUrl
+      }
     } catch {
+      payWindow?.close()
       setFormError("Checkout gagal. Coba lagi.")
       setSubmitting(false)
     }
@@ -228,9 +250,9 @@ export function CheckoutForm({ product }: { product: DemoProduct }) {
       </Button>
 
       <p className="text-xs text-muted-foreground">
-        Kamu akan dibawa ke halaman pembayaran Mayar. Endpoint yang dipakai
-        tidak punya <code>redirectUrl</code>, jadi kembalinya manual — tautan
-        pesanan disimpan di peramban ini.
+        Pembayaran terbuka di tab baru. Halaman ini tetap memantau pesananmu dan
+        berpindah sendiri ke struk begitu uangnya masuk — Mayar tidak bisa
+        mengembalikan kamu ke sini, jadi tab inilah yang menunggu.
       </p>
     </form>
   )
