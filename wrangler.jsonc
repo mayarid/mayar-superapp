@@ -3,7 +3,9 @@
   "name": "mayar-superapp",
   "compatibility_date": "2026-08-20",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "@tanstack/react-start/server-entry",
+  // Overridden from the framework default so the Durable Objects can be
+  // exported alongside the fetch handler.
+  "main": "src/server.ts",
 
   "observability": {
     "enabled": true

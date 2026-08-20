@@ -10,33 +10,102 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiCheckoutRouteImport } from './routes/api/checkout'
+import { Route as ApiCouponRouteImport } from './routes/api/coupon'
+import { Route as BillingSekaliBayarRouteImport } from './routes/billing/sekali-bayar'
+import { Route as CheckoutOrderIdRouteImport } from './routes/checkout.$orderId'
+import { Route as ApiOrderIdRouteImport } from './routes/api/order.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCheckoutRoute = ApiCheckoutRouteImport.update({
+  id: '/api/checkout',
+  path: '/api/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCouponRoute = ApiCouponRouteImport.update({
+  id: '/api/coupon',
+  path: '/api/coupon',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingSekaliBayarRoute = BillingSekaliBayarRouteImport.update({
+  id: '/billing/sekali-bayar',
+  path: '/billing/sekali-bayar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutOrderIdRoute = CheckoutOrderIdRouteImport.update({
+  id: '/checkout/$orderId',
+  path: '/checkout/$orderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOrderIdRoute = ApiOrderIdRouteImport.update({
+  id: '/api/order/$id',
+  path: '/api/order/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/checkout': typeof ApiCheckoutRoute
+  '/api/coupon': typeof ApiCouponRoute
+  '/billing/sekali-bayar': typeof BillingSekaliBayarRoute
+  '/checkout/$orderId': typeof CheckoutOrderIdRoute
+  '/api/order/$id': typeof ApiOrderIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/checkout': typeof ApiCheckoutRoute
+  '/api/coupon': typeof ApiCouponRoute
+  '/billing/sekali-bayar': typeof BillingSekaliBayarRoute
+  '/checkout/$orderId': typeof CheckoutOrderIdRoute
+  '/api/order/$id': typeof ApiOrderIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/checkout': typeof ApiCheckoutRoute
+  '/api/coupon': typeof ApiCouponRoute
+  '/billing/sekali-bayar': typeof BillingSekaliBayarRoute
+  '/checkout/$orderId': typeof CheckoutOrderIdRoute
+  '/api/order/$id': typeof ApiOrderIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/api/checkout'
+    | '/api/coupon'
+    | '/billing/sekali-bayar'
+    | '/checkout/$orderId'
+    | '/api/order/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/api/checkout'
+    | '/api/coupon'
+    | '/billing/sekali-bayar'
+    | '/checkout/$orderId'
+    | '/api/order/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/checkout'
+    | '/api/coupon'
+    | '/billing/sekali-bayar'
+    | '/checkout/$orderId'
+    | '/api/order/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiCheckoutRoute: typeof ApiCheckoutRoute
+  ApiCouponRoute: typeof ApiCouponRoute
+  BillingSekaliBayarRoute: typeof BillingSekaliBayarRoute
+  CheckoutOrderIdRoute: typeof CheckoutOrderIdRoute
+  ApiOrderIdRoute: typeof ApiOrderIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +117,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/checkout': {
+      id: '/api/checkout'
+      path: '/api/checkout'
+      fullPath: '/api/checkout'
+      preLoaderRoute: typeof ApiCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/coupon': {
+      id: '/api/coupon'
+      path: '/api/coupon'
+      fullPath: '/api/coupon'
+      preLoaderRoute: typeof ApiCouponRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing/sekali-bayar': {
+      id: '/billing/sekali-bayar'
+      path: '/billing/sekali-bayar'
+      fullPath: '/billing/sekali-bayar'
+      preLoaderRoute: typeof BillingSekaliBayarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout/$orderId': {
+      id: '/checkout/$orderId'
+      path: '/checkout/$orderId'
+      fullPath: '/checkout/$orderId'
+      preLoaderRoute: typeof CheckoutOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/order/$id': {
+      id: '/api/order/$id'
+      path: '/api/order/$id'
+      fullPath: '/api/order/$id'
+      preLoaderRoute: typeof ApiOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiCheckoutRoute: ApiCheckoutRoute,
+  ApiCouponRoute: ApiCouponRoute,
+  BillingSekaliBayarRoute: BillingSekaliBayarRoute,
+  CheckoutOrderIdRoute: CheckoutOrderIdRoute,
+  ApiOrderIdRoute: ApiOrderIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
