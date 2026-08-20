@@ -84,11 +84,17 @@ export function CheckoutForm({ product }: { product: DemoProduct }) {
     setSubmitting(true)
     setFormError(null)
 
-    // Opened synchronously, inside the click, and pointed at the real URL once
-    // the server answers. A browser only grants window.open during a user
-    // gesture, and awaiting the fetch first would spend that gesture and get
-    // the popup blocked.
-    const payWindow = window.open("about:blank", "_blank")
+    // The QRIS model draws its code on our own status page, so it needs no
+    // second tab. Every other model hands off to a hosted Mayar page.
+    //
+    // The window is opened synchronously, inside the click, and pointed at
+    // the real URL once the server answers. A browser only grants
+    // window.open during a user gesture, and awaiting the fetch first would
+    // spend that gesture and get the popup blocked.
+    const rendersInPlace = product.model === "qris"
+    const payWindow = rendersInPlace
+      ? null
+      : window.open("about:blank", "_blank")
 
     try {
       const response = await fetch("/api/checkout", {
@@ -105,10 +111,14 @@ export function CheckoutForm({ product }: { product: DemoProduct }) {
       const data = await response.json<{
         orderId?: string
         payUrl?: string
+        qrUrl?: string
         error?: string
       }>()
 
-      if (!response.ok || !data.payUrl || !data.orderId) {
+      // The QRIS model returns a QR image instead of a hosted page, so a
+      // missing payUrl is expected there and must not read as a failure.
+      const usable = rendersInPlace ? data.qrUrl : data.payUrl
+      if (!response.ok || !usable || !data.orderId) {
         payWindow?.close()
         setFormError(data.error ?? "Checkout gagal. Coba lagi.")
         setSubmitting(false)
@@ -119,9 +129,14 @@ export function CheckoutForm({ product }: { product: DemoProduct }) {
       // cannot send the buyer back on its own — see docs/api-findings.md.
       localStorage.setItem(LAST_ORDER_KEY, data.orderId)
 
-      if (payWindow && !payWindow.closed) {
+      if (rendersInPlace) {
+        await navigate({
+          to: "/checkout/$orderId",
+          params: { orderId: data.orderId },
+        })
+      } else if (payWindow && !payWindow.closed) {
         payWindow.opener = null
-        payWindow.location.replace(data.payUrl)
+        payWindow.location.replace(data.payUrl!)
         // This tab stays alive and watches the order, so it can advance to the
         // receipt by itself the moment the payment lands.
         await navigate({
@@ -130,7 +145,7 @@ export function CheckoutForm({ product }: { product: DemoProduct }) {
         })
       } else {
         // Popup blocked. Fall back to this tab; the buyer returns by hand.
-        window.location.href = data.payUrl
+        window.location.href = data.payUrl!
       }
     } catch {
       payWindow?.close()
@@ -182,45 +197,53 @@ export function CheckoutForm({ product }: { product: DemoProduct }) {
           />
         </Field>
 
-        <Field data-invalid={couponError ? true : undefined}>
-          <FieldLabel htmlFor="coupon">Kode diskon</FieldLabel>
-          <InputGroup>
-            <InputGroupInput
-              id="coupon"
-              value={couponInput}
-              placeholder={product.coupons[0]}
-              aria-invalid={couponError ? true : undefined}
-              onChange={(event) => {
-                setCouponInput(event.target.value)
-                setCoupon(null)
-                setCouponError(null)
-              }}
-            />
-            <InputGroupAddon align="inline-end">
-              <InputGroupButton
-                type="button"
-                onClick={checkCoupon}
-                disabled={couponChecking || !couponInput.trim()}
-              >
-                {couponChecking ? (
-                  <Spinner />
-                ) : coupon ? (
-                  <CheckIcon />
-                ) : (
-                  <TicketIcon />
-                )}
-                {coupon ? "Terpakai" : "Pakai"}
-              </InputGroupButton>
-            </InputGroupAddon>
-          </InputGroup>
-          {couponError ? (
-            <FieldError>{couponError}</FieldError>
-          ) : (
-            <FieldDescription>
-              Coba {product.coupons.join(" atau ")}.
-            </FieldDescription>
-          )}
-        </Field>
+        {product.couponBlocked ? (
+          <Field>
+            <FieldLabel htmlFor="coupon">Kode diskon</FieldLabel>
+            <Input id="coupon" disabled placeholder="Tidak tersedia" />
+            <FieldDescription>{product.couponBlocked.reason}</FieldDescription>
+          </Field>
+        ) : (
+          <Field data-invalid={couponError ? true : undefined}>
+            <FieldLabel htmlFor="coupon">Kode diskon</FieldLabel>
+            <InputGroup>
+              <InputGroupInput
+                id="coupon"
+                value={couponInput}
+                placeholder={product.coupons[0]}
+                aria-invalid={couponError ? true : undefined}
+                onChange={(event) => {
+                  setCouponInput(event.target.value)
+                  setCoupon(null)
+                  setCouponError(null)
+                }}
+              />
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton
+                  type="button"
+                  onClick={checkCoupon}
+                  disabled={couponChecking || !couponInput.trim()}
+                >
+                  {couponChecking ? (
+                    <Spinner />
+                  ) : coupon ? (
+                    <CheckIcon />
+                  ) : (
+                    <TicketIcon />
+                  )}
+                  {coupon ? "Terpakai" : "Pakai"}
+                </InputGroupButton>
+              </InputGroupAddon>
+            </InputGroup>
+            {couponError ? (
+              <FieldError>{couponError}</FieldError>
+            ) : (
+              <FieldDescription>
+                Coba {product.coupons.join(" atau ")}.
+              </FieldDescription>
+            )}
+          </Field>
+        )}
       </FieldGroup>
 
       <Separator />
@@ -244,15 +267,17 @@ export function CheckoutForm({ product }: { product: DemoProduct }) {
 
       {formError ? <FieldError>{formError}</FieldError> : null}
 
-      <Button type="submit" disabled={submitting}>
+      <Button type="submit" disabled={submitting || Boolean(product.blocked)}>
         {submitting ? <Spinner data-icon="inline-start" /> : null}
-        Bayar {formatRupiah(net)} dengan QRIS
+        {product.blocked
+          ? "Belum bisa dibayar"
+          : `Bayar ${formatRupiah(net)} dengan QRIS`}
       </Button>
 
       <p className="text-xs text-muted-foreground">
-        Pembayaran terbuka di tab baru. Halaman ini tetap memantau pesananmu dan
-        berpindah sendiri ke struk begitu uangnya masuk — Mayar tidak bisa
-        mengembalikan kamu ke sini, jadi tab inilah yang menunggu.
+        {product.model === "qris"
+          ? "Kode QR digambar di halaman ini juga, bukan di halaman Mayar. Nominalnya diberi kode unik supaya pembayaranmu bisa dibedakan dari yang lain."
+          : "Pembayaran terbuka di tab baru. Halaman ini tetap memantau pesananmu dan berpindah sendiri ke struk begitu uangnya masuk — Mayar tidak bisa mengembalikan kamu ke sini, jadi tab inilah yang menunggu."}
       </p>
     </form>
   )

@@ -12,8 +12,16 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiCheckoutRouteImport } from './routes/api/checkout'
 import { Route as ApiCouponRouteImport } from './routes/api/coupon'
+import { Route as BillingCicilanRouteImport } from './routes/billing/cicilan'
+import { Route as BillingDompetKreditRouteImport } from './routes/billing/dompet-kredit'
+import { Route as BillingInvoiceBerbutirRouteImport } from './routes/billing/invoice-berbutir'
+import { Route as BillingLisensiSaasRouteImport } from './routes/billing/lisensi-saas'
+import { Route as BillingMembershipRouteImport } from './routes/billing/membership'
+import { Route as BillingQrisDinamisRouteImport } from './routes/billing/qris-dinamis'
 import { Route as BillingSekaliBayarRouteImport } from './routes/billing/sekali-bayar'
+import { Route as BillingSekaliBayarFulfillmentRouteImport } from './routes/billing/sekali-bayar-fulfillment'
 import { Route as CheckoutOrderIdRouteImport } from './routes/checkout.$orderId'
+import { Route as ApiFulfillIdRouteImport } from './routes/api/fulfill.$id'
 import { Route as ApiOrderIdRouteImport } from './routes/api/order.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -31,14 +39,55 @@ const ApiCouponRoute = ApiCouponRouteImport.update({
   path: '/api/coupon',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BillingCicilanRoute = BillingCicilanRouteImport.update({
+  id: '/billing/cicilan',
+  path: '/billing/cicilan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingDompetKreditRoute = BillingDompetKreditRouteImport.update({
+  id: '/billing/dompet-kredit',
+  path: '/billing/dompet-kredit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingInvoiceBerbutirRoute = BillingInvoiceBerbutirRouteImport.update({
+  id: '/billing/invoice-berbutir',
+  path: '/billing/invoice-berbutir',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingLisensiSaasRoute = BillingLisensiSaasRouteImport.update({
+  id: '/billing/lisensi-saas',
+  path: '/billing/lisensi-saas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingMembershipRoute = BillingMembershipRouteImport.update({
+  id: '/billing/membership',
+  path: '/billing/membership',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingQrisDinamisRoute = BillingQrisDinamisRouteImport.update({
+  id: '/billing/qris-dinamis',
+  path: '/billing/qris-dinamis',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BillingSekaliBayarRoute = BillingSekaliBayarRouteImport.update({
   id: '/billing/sekali-bayar',
   path: '/billing/sekali-bayar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BillingSekaliBayarFulfillmentRoute =
+  BillingSekaliBayarFulfillmentRouteImport.update({
+    id: '/billing/sekali-bayar-fulfillment',
+    path: '/billing/sekali-bayar-fulfillment',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const CheckoutOrderIdRoute = CheckoutOrderIdRouteImport.update({
   id: '/checkout/$orderId',
   path: '/checkout/$orderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFulfillIdRoute = ApiFulfillIdRouteImport.update({
+  id: '/api/fulfill/$id',
+  path: '/api/fulfill/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOrderIdRoute = ApiOrderIdRouteImport.update({
@@ -51,16 +100,32 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/checkout': typeof ApiCheckoutRoute
   '/api/coupon': typeof ApiCouponRoute
+  '/billing/cicilan': typeof BillingCicilanRoute
+  '/billing/dompet-kredit': typeof BillingDompetKreditRoute
+  '/billing/invoice-berbutir': typeof BillingInvoiceBerbutirRoute
+  '/billing/lisensi-saas': typeof BillingLisensiSaasRoute
+  '/billing/membership': typeof BillingMembershipRoute
+  '/billing/qris-dinamis': typeof BillingQrisDinamisRoute
   '/billing/sekali-bayar': typeof BillingSekaliBayarRoute
+  '/billing/sekali-bayar-fulfillment': typeof BillingSekaliBayarFulfillmentRoute
   '/checkout/$orderId': typeof CheckoutOrderIdRoute
+  '/api/fulfill/$id': typeof ApiFulfillIdRoute
   '/api/order/$id': typeof ApiOrderIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/checkout': typeof ApiCheckoutRoute
   '/api/coupon': typeof ApiCouponRoute
+  '/billing/cicilan': typeof BillingCicilanRoute
+  '/billing/dompet-kredit': typeof BillingDompetKreditRoute
+  '/billing/invoice-berbutir': typeof BillingInvoiceBerbutirRoute
+  '/billing/lisensi-saas': typeof BillingLisensiSaasRoute
+  '/billing/membership': typeof BillingMembershipRoute
+  '/billing/qris-dinamis': typeof BillingQrisDinamisRoute
   '/billing/sekali-bayar': typeof BillingSekaliBayarRoute
+  '/billing/sekali-bayar-fulfillment': typeof BillingSekaliBayarFulfillmentRoute
   '/checkout/$orderId': typeof CheckoutOrderIdRoute
+  '/api/fulfill/$id': typeof ApiFulfillIdRoute
   '/api/order/$id': typeof ApiOrderIdRoute
 }
 export interface FileRoutesById {
@@ -68,8 +133,16 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/api/checkout': typeof ApiCheckoutRoute
   '/api/coupon': typeof ApiCouponRoute
+  '/billing/cicilan': typeof BillingCicilanRoute
+  '/billing/dompet-kredit': typeof BillingDompetKreditRoute
+  '/billing/invoice-berbutir': typeof BillingInvoiceBerbutirRoute
+  '/billing/lisensi-saas': typeof BillingLisensiSaasRoute
+  '/billing/membership': typeof BillingMembershipRoute
+  '/billing/qris-dinamis': typeof BillingQrisDinamisRoute
   '/billing/sekali-bayar': typeof BillingSekaliBayarRoute
+  '/billing/sekali-bayar-fulfillment': typeof BillingSekaliBayarFulfillmentRoute
   '/checkout/$orderId': typeof CheckoutOrderIdRoute
+  '/api/fulfill/$id': typeof ApiFulfillIdRoute
   '/api/order/$id': typeof ApiOrderIdRoute
 }
 export interface FileRouteTypes {
@@ -78,24 +151,48 @@ export interface FileRouteTypes {
     | '/'
     | '/api/checkout'
     | '/api/coupon'
+    | '/billing/cicilan'
+    | '/billing/dompet-kredit'
+    | '/billing/invoice-berbutir'
+    | '/billing/lisensi-saas'
+    | '/billing/membership'
+    | '/billing/qris-dinamis'
     | '/billing/sekali-bayar'
+    | '/billing/sekali-bayar-fulfillment'
     | '/checkout/$orderId'
+    | '/api/fulfill/$id'
     | '/api/order/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/api/checkout'
     | '/api/coupon'
+    | '/billing/cicilan'
+    | '/billing/dompet-kredit'
+    | '/billing/invoice-berbutir'
+    | '/billing/lisensi-saas'
+    | '/billing/membership'
+    | '/billing/qris-dinamis'
     | '/billing/sekali-bayar'
+    | '/billing/sekali-bayar-fulfillment'
     | '/checkout/$orderId'
+    | '/api/fulfill/$id'
     | '/api/order/$id'
   id:
     | '__root__'
     | '/'
     | '/api/checkout'
     | '/api/coupon'
+    | '/billing/cicilan'
+    | '/billing/dompet-kredit'
+    | '/billing/invoice-berbutir'
+    | '/billing/lisensi-saas'
+    | '/billing/membership'
+    | '/billing/qris-dinamis'
     | '/billing/sekali-bayar'
+    | '/billing/sekali-bayar-fulfillment'
     | '/checkout/$orderId'
+    | '/api/fulfill/$id'
     | '/api/order/$id'
   fileRoutesById: FileRoutesById
 }
@@ -103,8 +200,16 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiCheckoutRoute: typeof ApiCheckoutRoute
   ApiCouponRoute: typeof ApiCouponRoute
+  BillingCicilanRoute: typeof BillingCicilanRoute
+  BillingDompetKreditRoute: typeof BillingDompetKreditRoute
+  BillingInvoiceBerbutirRoute: typeof BillingInvoiceBerbutirRoute
+  BillingLisensiSaasRoute: typeof BillingLisensiSaasRoute
+  BillingMembershipRoute: typeof BillingMembershipRoute
+  BillingQrisDinamisRoute: typeof BillingQrisDinamisRoute
   BillingSekaliBayarRoute: typeof BillingSekaliBayarRoute
+  BillingSekaliBayarFulfillmentRoute: typeof BillingSekaliBayarFulfillmentRoute
   CheckoutOrderIdRoute: typeof CheckoutOrderIdRoute
+  ApiFulfillIdRoute: typeof ApiFulfillIdRoute
   ApiOrderIdRoute: typeof ApiOrderIdRoute
 }
 
@@ -131,6 +236,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCouponRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/billing/cicilan': {
+      id: '/billing/cicilan'
+      path: '/billing/cicilan'
+      fullPath: '/billing/cicilan'
+      preLoaderRoute: typeof BillingCicilanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing/dompet-kredit': {
+      id: '/billing/dompet-kredit'
+      path: '/billing/dompet-kredit'
+      fullPath: '/billing/dompet-kredit'
+      preLoaderRoute: typeof BillingDompetKreditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing/invoice-berbutir': {
+      id: '/billing/invoice-berbutir'
+      path: '/billing/invoice-berbutir'
+      fullPath: '/billing/invoice-berbutir'
+      preLoaderRoute: typeof BillingInvoiceBerbutirRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing/lisensi-saas': {
+      id: '/billing/lisensi-saas'
+      path: '/billing/lisensi-saas'
+      fullPath: '/billing/lisensi-saas'
+      preLoaderRoute: typeof BillingLisensiSaasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing/membership': {
+      id: '/billing/membership'
+      path: '/billing/membership'
+      fullPath: '/billing/membership'
+      preLoaderRoute: typeof BillingMembershipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing/qris-dinamis': {
+      id: '/billing/qris-dinamis'
+      path: '/billing/qris-dinamis'
+      fullPath: '/billing/qris-dinamis'
+      preLoaderRoute: typeof BillingQrisDinamisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/billing/sekali-bayar': {
       id: '/billing/sekali-bayar'
       path: '/billing/sekali-bayar'
@@ -138,11 +285,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BillingSekaliBayarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/billing/sekali-bayar-fulfillment': {
+      id: '/billing/sekali-bayar-fulfillment'
+      path: '/billing/sekali-bayar-fulfillment'
+      fullPath: '/billing/sekali-bayar-fulfillment'
+      preLoaderRoute: typeof BillingSekaliBayarFulfillmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout/$orderId': {
       id: '/checkout/$orderId'
       path: '/checkout/$orderId'
       fullPath: '/checkout/$orderId'
       preLoaderRoute: typeof CheckoutOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/fulfill/$id': {
+      id: '/api/fulfill/$id'
+      path: '/api/fulfill/$id'
+      fullPath: '/api/fulfill/$id'
+      preLoaderRoute: typeof ApiFulfillIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/order/$id': {
@@ -159,8 +320,16 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiCheckoutRoute: ApiCheckoutRoute,
   ApiCouponRoute: ApiCouponRoute,
+  BillingCicilanRoute: BillingCicilanRoute,
+  BillingDompetKreditRoute: BillingDompetKreditRoute,
+  BillingInvoiceBerbutirRoute: BillingInvoiceBerbutirRoute,
+  BillingLisensiSaasRoute: BillingLisensiSaasRoute,
+  BillingMembershipRoute: BillingMembershipRoute,
+  BillingQrisDinamisRoute: BillingQrisDinamisRoute,
   BillingSekaliBayarRoute: BillingSekaliBayarRoute,
+  BillingSekaliBayarFulfillmentRoute: BillingSekaliBayarFulfillmentRoute,
   CheckoutOrderIdRoute: CheckoutOrderIdRoute,
+  ApiFulfillIdRoute: ApiFulfillIdRoute,
   ApiOrderIdRoute: ApiOrderIdRoute,
 }
 export const routeTree = rootRouteImport

@@ -318,3 +318,24 @@ export interface LicenseResponse {
   status?: string
   message?: string
 }
+
+/**
+ * A row from `GET /hl/v2/memberships/members`.
+ *
+ * The nested objects arrive **flattened into dotted keys** — `"customer.email"`
+ * is a literal property name, not a `customer` object with an `email` field.
+ * No other endpoint in this app does that.
+ */
+export interface MembershipMember {
+  id: string
+  /** A short human-readable code such as "FDWGFECK", not a UUID. */
+  memberId: string
+  customerId: string
+  membershipTierId: string
+  status: string
+  nextPayment: string | null
+  "customer.email"?: string
+  "customer.name"?: string
+  "customer.mobile"?: string
+  "membershipTier.name"?: string
+}

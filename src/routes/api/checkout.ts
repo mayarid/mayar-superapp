@@ -3,15 +3,11 @@ import { env } from "cloudflare:workers"
 import { findByModel } from "@/lib/catalog"
 import { MayarApiError } from "@/lib/mayar/client"
 import { getMayarConfig } from "@/lib/mayar/config"
-import { createPayment, validateCoupon } from "@/lib/mayar/operations"
+import { validateCoupon } from "@/lib/mayar/operations"
 import { applyDiscount } from "@/lib/money"
-import {
-  attachMayarIds,
-  createOrder,
-  newOrderId,
-  recordCouponApplied,
-} from "@/server/orders"
-import type { DiscountResult } from "@/lib/money"
+import { createCheckout } from "@/server/checkout"
+import { recordCouponApplied } from "@/server/orders"
+import type { DiscountResult, DiscountType } from "@/lib/money"
 
 /** Redemptions allowed per coupon code, enforced here because Mayar does not. */
 const COUPON_LIMIT = 200
@@ -43,6 +39,7 @@ export const Route = createFileRoute("/api/checkout")({
 
         const product = findByModel(payload.model)
         if (!product) return bad("Model billing tidak dikenal.")
+        if (product.blocked) return bad(product.blocked, 503)
 
         const name = payload.name?.trim() ?? ""
         const email = payload.email?.trim().toLowerCase() ?? ""
@@ -85,12 +82,13 @@ export const Route = createFileRoute("/api/checkout")({
         }
         let couponCode: string | null = null
         let couponTerms: {
-          discountType: "monetary" | "percentage"
+          discountType: DiscountType
           discountValue: number
         } | null = null
 
         const requested = payload.couponCode?.trim().toUpperCase()
         if (requested) {
+          if (product.couponBlocked) return bad(product.couponBlocked.reason)
           if (!product.coupons.includes(requested)) {
             return bad("Kode diskon tidak berlaku untuk produk ini.")
           }
@@ -142,66 +140,42 @@ export const Route = createFileRoute("/api/checkout")({
           }
         }
 
-        const orderId = newOrderId()
-
-        // Written before Mayar is called so a retry reuses this id, and so a
-        // create that fails halfway still leaves something to reconcile.
-        await createOrder(env.DB, {
-          id: orderId,
-          model: product.model,
-          productId: product.productId,
-          amountGross: discount.gross,
-          amountDiscount: discount.discount,
-          amountNet: discount.net,
-          couponCode,
-          buyerName: name,
-          buyerEmail: email,
-          buyerMobile: mobile,
-        })
-
-        if (couponCode && couponTerms) {
-          await recordCouponApplied(env.DB, {
-            orderId,
-            couponCode,
-            productId: product.productId,
-            discountType: couponTerms.discountType,
-            discountValue: couponTerms.discountValue,
-            appliedAmount: discount.discount,
-          })
-        }
-
-        const budget = await gate.acquire(1)
+        // Membership registration costs an extra call before the bill exists.
+        const cost = product.model === "membership" ? 2 : 1
+        const budget = await gate.acquire(cost)
         if (!budget.granted) {
           return bad("Demo sedang sibuk. Coba lagi sebentar lagi.", 503)
         }
 
         try {
-          const payment = await createPayment(config, {
-            name: product.title,
-            amount: discount.net,
-            email,
-            mobile,
-            description: `Pesanan ${orderId} — ${product.title}`,
-            // QRIS is the point of this demo, so the hosted page is pinned to it.
-            paymentMethod: "qris",
-            extraData: { orderId, buyerName: name, model: product.model },
+          const outcome = await createCheckout({
+            config,
+            db: env.DB,
+            product,
+            buyer: { name, email, mobile },
+            discount,
+            couponCode,
           })
 
-          await attachMayarIds(env.DB, orderId, {
-            mayarId: payment.id,
-            transactionId: payment.transactionId,
-            payUrl: payment.link,
-          })
+          if (couponCode && couponTerms) {
+            await recordCouponApplied(env.DB, {
+              orderId: outcome.orderId,
+              couponCode,
+              productId: product.productId,
+              discountType: couponTerms.discountType,
+              discountValue: couponTerms.discountValue,
+              appliedAmount: discount.discount,
+            })
+          }
 
           // Start the reconciler now that something is waiting to be paid.
           await gate.wake()
 
           return Response.json({
-            orderId,
-            payUrl: payment.link,
+            ...outcome,
             gross: discount.gross,
             discount: discount.discount,
-            net: discount.net,
+            net: outcome.charged,
           })
         } catch (error) {
           if (error instanceof MayarApiError) {

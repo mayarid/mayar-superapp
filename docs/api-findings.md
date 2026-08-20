@@ -390,3 +390,57 @@ a coupon against these products, but nothing can apply it.
 So a coupon is only usable where the app controls the amount it sends:
 `payments/create`, `invoices/create`, `installments/create`, and the QRIS
 amount. Five of the eight billing models, not eight.
+
+## 20. Instalment terms return a bare slug where every other endpoint returns a URL
+
+**Date:** 2026-08-20
+**Endpoint:** `POST /hl/v2/installments/create`
+
+`invoices/create` and `payments/create` both return `link` as an absolute URL.
+Each term inside `installments[].invoices[]` returns `link` as a slug:
+
+```json
+{ "amount": 1000, "link": "5kg42jjzpa" }
+```
+
+Rendered as-is, that is a relative link that resolves against your own site.
+The prefix has to be added by the client — `https://<merchant>.myr.id/invoices/`
+— which means the merchant origin becomes something the integration must know
+out of band.
+
+## 21. Membership member rows arrive with flattened dotted keys
+
+**Date:** 2026-08-20
+**Endpoint:** `GET /hl/v2/memberships/members`
+
+The nested objects are not nested. `customer.email` is a literal property name:
+
+```json
+{
+  "memberId": "FDWGFECK",
+  "customer.name": "Faiz Intifada",
+  "customer.email": "faizintifada@gmail.com",
+  "membershipTier.name": "Pro Bulanan"
+}
+```
+
+Every other endpoint in this app nests its relations, including the balance
+history, which returns a real `customer` object. Code written against the usual
+shape reads `undefined` here and fails silently — which is exactly how the
+membership re-registration path broke.
+
+## 22. A membership email may only be registered once per tier
+
+**Date:** 2026-08-20
+**Endpoint:** `POST /hl/v2/memberships/members/create`
+
+A second registration for the same email on the same tier is rejected:
+
+```json
+{ "messages": "Email sudah terdaftar pada tier ini." }
+```
+
+This is correct behaviour, but it makes renewal the normal path rather than the
+exception. A subscription checkout must look the member up and bill the
+existing record, not create a new one. Combined with finding 21, the lookup is
+easy to get wrong.

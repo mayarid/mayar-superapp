@@ -154,3 +154,18 @@ export async function mayarFetchPage<T>(
     nextStartingAfter: body.nextStartingAfter ?? null,
   }
 }
+
+/**
+ * The merchant's public storefront origin.
+ *
+ * Most endpoints return absolute payment links, but `installments/create`
+ * returns each term's `link` as a bare slug. Prefixing has to happen somewhere,
+ * and doing it here keeps the guess in one place.
+ */
+export const MERCHANT_ORIGIN = "https://faiz-intifada.myr.id"
+
+/** Turns a Mayar payment link into an absolute URL, if it is not one already. */
+export function absoluteMayarLink(link: string): string {
+  if (/^https?:\/\//i.test(link)) return link
+  return `${MERCHANT_ORIGIN}/invoices/${link.replace(/^\/+/, "")}`
+}

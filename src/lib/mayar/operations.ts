@@ -17,6 +17,7 @@ import type {
   CreditMutationResponse,
   LicenseRequest,
   LicenseResponse,
+  MembershipMember,
   RegisterMemberRequest,
   RegisterMemberResponse,
   TransactionDetail,
@@ -295,5 +296,22 @@ export function verifyLicense(
     config,
     "/saas/v2/license/verify",
     body(payload)
+  )
+}
+
+/**
+ * Lists the members of a membership product.
+ *
+ * Needed because `memberships/members/create` refuses an email already
+ * registered on the tier. A returning buyer has to be found rather than
+ * created again.
+ */
+export function listMembers(
+  config: MayarConfig,
+  productId: string
+): Promise<MayarPage<MembershipMember>> {
+  return mayarFetchPage<MembershipMember>(
+    config,
+    `/hl/v2/memberships/members${toQuery({ productId, limit: MAX_PAGE })}`
   )
 }

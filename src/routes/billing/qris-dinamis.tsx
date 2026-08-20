@@ -2,11 +2,11 @@ import { createFileRoute } from "@tanstack/react-router"
 import { BillingPage } from "@/components/billing/billing-page"
 import { getProduct } from "@/lib/catalog"
 
-export const Route = createFileRoute("/billing/sekali-bayar")({
+export const Route = createFileRoute("/billing/qris-dinamis")({
   component: Page,
-  head: () => ({ meta: [{ title: "Sekali bayar — Mayar Superapp" }] }),
+  head: () => ({ meta: [{ title: "QRIS dinamis — Mayar Superapp" }] }),
 })
 
 function Page() {
-  return <BillingPage product={getProduct("sekali-bayar")} />
+  return <BillingPage product={getProduct("qris")} />
 }

@@ -4,6 +4,7 @@ import {
   CheckCircle2Icon,
   CircleAlertIcon,
   ClockIcon,
+  DownloadIcon,
   ExternalLinkIcon,
   RefreshCwIcon,
 } from "lucide-react"
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/checkout/$orderId")({
 
 interface OrderView {
   id: string
+  model: string
   status: "created" | "pending" | "paid" | "expired" | "ambiguous"
   gross: number
   discount: number
@@ -159,7 +161,30 @@ function CheckoutStatusPage() {
             ) : null}
           </dl>
 
-          {order.status === "pending" || order.status === "created" ? (
+          {(order.status === "pending" || order.status === "created") &&
+          order.model === "qris" &&
+          order.payUrl ? (
+            <div className="flex flex-col items-center gap-3">
+              <img
+                src={order.payUrl}
+                alt="Kode QRIS untuk pesanan ini"
+                className="size-64 rounded-lg border bg-white p-2"
+                width={256}
+                height={256}
+              />
+              <p className="text-center text-sm text-muted-foreground">
+                Pindai dengan aplikasi pembayaran apa pun. Bayar tepat{" "}
+                <span className="font-medium text-foreground tabular-nums">
+                  {formatRupiah(order.net)}
+                </span>{" "}
+                — tiga angka terakhirnya adalah kode unik yang membedakan
+                pembayaranmu dari yang lain.
+              </p>
+            </div>
+          ) : null}
+
+          {(order.status === "pending" || order.status === "created") &&
+          order.model !== "qris" ? (
             <div className="flex flex-col gap-3">
               {order.payUrl ? (
                 <Button
@@ -202,6 +227,13 @@ function CheckoutStatusPage() {
               menolak menebak. Model ini dicocokkan tanpa nomor transaksi, dan
               menebak berarti menyerahkan barang ke pembeli yang salah.
             </p>
+          ) : null}
+
+          {order.fulfillments.some((item) => item.kind === "r2_grant") ? (
+            <Button render={<a href={`/api/fulfill/${order.id}`} />}>
+              <DownloadIcon data-icon="inline-start" />
+              Unduh berkas
+            </Button>
           ) : null}
 
           {order.fulfillments.length > 0 ? (
