@@ -2,6 +2,7 @@ import { DurableObject } from "cloudflare:workers"
 import { getMayarConfig } from "../lib/mayar/config"
 import { getTransaction, listPaidBalanceHistory } from "../lib/mayar/operations"
 import { fulfil } from "./fulfillment"
+import { matchPayments } from "./matching"
 import {
   expireStale,
   getOrder,
@@ -9,7 +10,6 @@ import {
   markAmbiguous,
   markPaid,
 } from "./orders"
-import { PAID_STATUSES } from "../lib/mayar/types"
 import type { BalanceHistoryItem } from "../lib/mayar/types"
 import type { Order } from "./orders"
 
@@ -37,9 +37,6 @@ const DIRECT_CHECK_AFTER_MS = 15_000
 
 /** Direct confirmations allowed per tick. Each costs one request. */
 const MAX_DIRECT_CHECKS = 3
-
-/** How far back a payment can be matched to an order. */
-const MATCH_WINDOW_MS = 45 * 60 * 1000
 
 interface Bucket {
   tokens: number
@@ -180,73 +177,19 @@ export class MayarGate extends DurableObject<Env> {
     return (await listPending(db)).length > 0
   }
 
-  /**
-   * Matches paid transactions to waiting orders.
-   *
-   * Proof strength differs by model. An order created through an endpoint that
-   * returned a transaction id is matched on that id and is certain. The QRIS
-   * and credit models get no id back from Mayar, so they are matched on a
-   * unique amount or on the buyer's email inside a time window.
-   *
-   * Both heuristics fail closed: an order is only settled when exactly one
-   * transaction matches it and that transaction matches no other order.
-   */
+  /** Applies the decisions from the pure matcher. */
   private async settle(
     db: D1Database,
     pending: Order[],
     history: BalanceHistoryItem[]
   ): Promise<void> {
-    // Rows that have not been paid yet must never satisfy a match.
-    const paid = history.filter((item) => PAID_STATUSES.has(item.status))
-    const claimed = new Set<string>()
+    for (const decision of matchPayments(pending, history)) {
+      const order = pending.find((item) => item.id === decision.orderId)
+      if (!order) continue
 
-    // Certain matches run first so a payment with a known transaction id can
-    // never be stolen by a weaker amount or email match.
-    //
-    // The key is `paymentLinkTransactionId`, not `id`. A history row's own `id`
-    // identifies the balance entry, and matching on it finds nothing.
-    for (const order of pending) {
-      if (!order.transaction_id) continue
-      const hit = paid.find(
-        (item) => item.paymentLinkTransactionId === order.transaction_id
-      )
-      if (hit) {
-        claimed.add(hit.id)
-        await this.confirm(db, order, order.transaction_id)
-      }
-    }
-
-    for (const order of pending) {
-      if (order.transaction_id) continue
-
-      const candidates = paid.filter((item) => {
-        if (claimed.has(item.id)) return false
-        if (Math.abs(item.createdAt - order.created_at) > MATCH_WINDOW_MS)
-          return false
-
-        // The money field is `credit`. There is no `amount` on these rows.
-        if (order.match_amount !== null)
-          return item.credit === order.match_amount
-        if (order.match_email !== null) {
-          return (
-            item.customer?.email.toLowerCase() ===
-              order.match_email.toLowerCase() &&
-            item.credit === order.amount_net
-          )
-        }
-        return false
-      })
-
-      if (candidates.length === 1) {
-        claimed.add(candidates[0].id)
-        await this.confirm(
-          db,
-          order,
-          candidates[0].paymentLinkTransactionId ?? candidates[0].id
-        )
-      } else if (candidates.length > 1) {
-        // More than one payment fits. Guessing here would hand goods to the
-        // wrong buyer, so a human decides instead.
+      if (decision.outcome === "paid") {
+        await this.confirm(db, order, decision.transactionId)
+      } else {
         await markAmbiguous(db, order.id)
       }
     }
