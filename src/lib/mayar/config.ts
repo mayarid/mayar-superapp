@@ -5,6 +5,8 @@ export type MayarEnvironment = "sandbox" | "production"
 export interface MayarConfig {
   apiKey: string
   environment: MayarEnvironment
+  /** Overrides the host entirely. Set when the environment's URL is disputed. */
+  baseUrl?: string
 }
 
 /**
@@ -28,5 +30,9 @@ export function getMayarConfig(): MayarConfig {
   return {
     apiKey,
     environment: configured === "production" ? "production" : "sandbox",
+    // The sandbox host is not settled: the API reference gives
+    // api.mayar.io, the official CLI targets api.mayar.club, and both
+    // answer. Rather than pick one silently, the URL can be set explicitly.
+    baseUrl: env.MAYAR_API_URL || undefined,
   }
 }

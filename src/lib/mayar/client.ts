@@ -6,8 +6,14 @@ import type { MayarConfig, MayarEnvironment } from "./config"
  * include their own prefix, so only the host varies by environment.
  */
 const HOST: Record<MayarEnvironment, string> = {
+  // Disputed: the API reference documents api.mayar.io, while the official CLI
+  // targets api.mayar.club. Both hosts answer. MAYAR_API_URL overrides this.
   sandbox: "https://api.mayar.io",
   production: "https://api.mayar.id",
+}
+
+function hostFor(config: MayarConfig): string {
+  return config.baseUrl ?? HOST[config.environment]
 }
 
 /** A single entry from Mayar's validator error array. */
@@ -92,7 +98,7 @@ async function request<T>(
     headers.set("Content-Type", "application/json")
   }
 
-  const response = await fetch(`${HOST[config.environment]}${path}`, {
+  const response = await fetch(`${hostFor(config)}${path}`, {
     ...init,
     headers,
   })

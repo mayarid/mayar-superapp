@@ -15,6 +15,9 @@
   // here — set it with: bunx wrangler secret put MAYAR_API_KEY
   "vars": {
     "MAYAR_ENV": "production",
+    // Leave empty to use the default host for MAYAR_ENV. Set this to settle
+    // the sandbox host dispute (api.mayar.io vs api.mayar.club).
+    "MAYAR_API_URL": "",
     "APP_URL": "http://localhost:3000"
   },
 
