@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { ResumeOrder } from "@/components/checkout/resume-order"
 import { MODELS } from "@/lib/catalog"
 
 export const Route = createFileRoute("/")({ component: IndexPage })
@@ -29,6 +30,8 @@ function IndexPage() {
           berjalan di lingkungan produksi.
         </p>
       </header>
+
+      <ResumeOrder />
 
       <ul className="grid gap-4 sm:grid-cols-2">
         {MODELS.map((product) => {

@@ -225,6 +225,71 @@ An undocumented `link` field in the same update payload moves the slug:
 Being undocumented, this is observed behaviour and not a contract. But without
 it, a mistaken product name is permanent in the URL a customer sees.
 
+## 14. `GET /hl/v2/transactions` is balance history, not transactions
+
+**Date:** 2026-08-20
+**Endpoint:** `GET /hl/v2/transactions`
+
+This is the most expensive finding in this file. It was invisible until a real
+Rp1.000 payment was made and the reconciler failed to notice it.
+
+The path suggests a list of the transactions that `payments/create` and
+`invoices/create` produce. It is not. It is the merchant's balance history, and
+its rows have a different shape:
+
+```jsonc
+{
+  "id": "97904e7c-…",                    // the balance-history row, NOT the transaction
+  "credit": 1000,                        // the amount — there is no `amount` field
+  "status": "paid",                      // later becomes "settled"
+  "balanceHistoryType": "payment_request",
+  "paymentMethod": "QRIS",
+  "paymentLinkTransactionId": "f00579d7-…",  // ← the id a create endpoint returned
+  "paymentLinkId": "c418e217-…",         // an internal link, NOT the demo product
+  "xenditTransactionId": "453d6ecb-…",   // the id shown in the hosted thank-you URL
+  "customer": { "email": "…", "name": "…", "mobile": "…" }
+}
+```
+
+Three traps:
+
+1. **Matching on `id` finds nothing.** The transaction id lives in
+   `paymentLinkTransactionId`.
+2. **`amount` is always null.** The field is `credit`. Requesting `amount`
+   through the `fields` parameter does not produce it.
+3. **`paymentLinkId` is not the product.** A single payment request gets its own
+   generated link (named "Penagihan"), so this cannot identify which demo
+   product was bought.
+
+`GET /hl/v2/transactions/unpaid` does *not* share this schema. There, `id` is
+the transaction id and `amount` is present, with status `active` or `expired`.
+The two list endpoints look related and are not.
+
+`GET /hl/v2/transactions/{id}` is authoritative and behaves as documented: pass
+the id from a create endpoint and it returns the real `status` and `amount`.
+
+## 15. `payments/create` truly cannot redirect the buyer back
+
+**Date:** 2026-08-20
+
+Finding 13 showed that an undocumented field (`link`) worked where the docs were
+silent, so `redirectUrl` was worth testing on the payment path too. It is not
+supported, in either of two ways:
+
+- `POST /hl/v2/payments/create` with `redirectUrl` returns 200 and ignores it.
+  The value is absent from the created record. **A silently dropped field is
+  worse than a rejection** — nothing signals that the request did not take.
+- `POST /hl/v2/payment-links/{id}/update` with `redirectUrl` on the resulting
+  payment link returns `messages: "success"`, and the value is still null
+  afterwards.
+
+`redirectUrl` only holds on a `generic_link` product created through
+`products/create` or `products/payment-link/create`. Those endpoints accept no
+buyer fields and no per-checkout amount.
+
+**The trade is therefore forced:** a checkout can know who is buying and apply a
+discount, or it can return the buyer to your site automatically. Not both.
+
 ---
 
 ## Still unresolved

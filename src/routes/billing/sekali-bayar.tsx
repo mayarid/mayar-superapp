@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { ArrowLeftIcon, CheckIcon } from "lucide-react"
 import { ProductionNotice } from "@/components/billing/production-notice"
 import { CheckoutForm } from "@/components/checkout/checkout-form"
+import { ResumeOrder } from "@/components/checkout/resume-order"
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
@@ -40,6 +41,7 @@ function SekaliBayarPage() {
           Semua model billing
         </Link>
         <ProductionNotice />
+        <ResumeOrder />
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_24rem] lg:items-start">

@@ -1,6 +1,6 @@
 import { DurableObject } from "cloudflare:workers"
 import { getMayarConfig } from "../lib/mayar/config"
-import { listPaidTransactions } from "../lib/mayar/operations"
+import { listBalanceHistory } from "../lib/mayar/operations"
 import { fulfil } from "./fulfillment"
 import {
   expireStale,
@@ -9,7 +9,8 @@ import {
   markAmbiguous,
   markPaid,
 } from "./orders"
-import type { TransactionListItem } from "../lib/mayar/types"
+import { PAID_STATUSES } from "../lib/mayar/types"
+import type { BalanceHistoryItem } from "../lib/mayar/types"
 import type { Order } from "./orders"
 
 /** Mayar's documented limit: 50 requests per minute per API key. */
@@ -127,7 +128,7 @@ export class MayarGate extends DurableObject<Env> {
     }
 
     const oldest = Math.min(...pending.map((order) => order.created_at))
-    const page = await listPaidTransactions(getMayarConfig(), {
+    const page = await listBalanceHistory(getMayarConfig(), {
       startAt: oldest - 60_000,
       endAt: Date.now() + 60_000,
     })
@@ -159,36 +160,44 @@ export class MayarGate extends DurableObject<Env> {
   private async settle(
     db: D1Database,
     pending: Order[],
-    transactions: TransactionListItem[]
+    history: BalanceHistoryItem[]
   ): Promise<void> {
+    // Rows that have not been paid yet must never satisfy a match.
+    const paid = history.filter((item) => PAID_STATUSES.has(item.status))
     const claimed = new Set<string>()
 
-    // Certain matches run first so a transaction with a known id can never be
-    // stolen by a weaker amount or email match.
+    // Certain matches run first so a payment with a known transaction id can
+    // never be stolen by a weaker amount or email match.
+    //
+    // The key is `paymentLinkTransactionId`, not `id`. A history row's own `id`
+    // identifies the balance entry, and matching on it finds nothing.
     for (const order of pending) {
       if (!order.transaction_id) continue
-      const hit = transactions.find((item) => item.id === order.transaction_id)
+      const hit = paid.find(
+        (item) => item.paymentLinkTransactionId === order.transaction_id
+      )
       if (hit) {
         claimed.add(hit.id)
-        await this.confirm(db, order, hit.id)
+        await this.confirm(db, order, order.transaction_id)
       }
     }
 
     for (const order of pending) {
       if (order.transaction_id) continue
 
-      const candidates = transactions.filter((item) => {
+      const candidates = paid.filter((item) => {
         if (claimed.has(item.id)) return false
         if (Math.abs(item.createdAt - order.created_at) > MATCH_WINDOW_MS)
           return false
 
+        // The money field is `credit`. There is no `amount` on these rows.
         if (order.match_amount !== null)
-          return item.amount === order.match_amount
+          return item.credit === order.match_amount
         if (order.match_email !== null) {
           return (
             item.customer?.email.toLowerCase() ===
               order.match_email.toLowerCase() &&
-            item.amount === order.amount_net
+            item.credit === order.amount_net
           )
         }
         return false
@@ -196,7 +205,11 @@ export class MayarGate extends DurableObject<Env> {
 
       if (candidates.length === 1) {
         claimed.add(candidates[0].id)
-        await this.confirm(db, order, candidates[0].id)
+        await this.confirm(
+          db,
+          order,
+          candidates[0].paymentLinkTransactionId ?? candidates[0].id
+        )
       } else if (candidates.length > 1) {
         // More than one payment fits. Guessing here would hand goods to the
         // wrong buyer, so a human decides instead.

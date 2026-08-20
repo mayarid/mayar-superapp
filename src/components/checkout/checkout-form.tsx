@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/input-group"
 import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
+import { LAST_ORDER_KEY } from "@/components/checkout/resume-order"
 import { formatRupiah } from "@/lib/money"
 import type { DemoProduct } from "@/lib/catalog"
 
@@ -108,7 +109,7 @@ export function CheckoutForm({ product }: { product: DemoProduct }) {
       // Remember the order so the visitor can find it again after paying on
       // Mayar's page. There is no redirectUrl on this endpoint, so nothing
       // brings them back automatically.
-      localStorage.setItem("mayar-superapp:last-order", data.orderId)
+      localStorage.setItem(LAST_ORDER_KEY, data.orderId)
       window.location.href = data.payUrl
     } catch {
       setFormError("Checkout gagal. Coba lagi.")

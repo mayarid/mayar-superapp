@@ -70,22 +70,69 @@ export interface TransactionCustomer {
   mobile: string
 }
 
-export interface TransactionListItem {
+/**
+ * A row from `GET /hl/v2/transactions`.
+ *
+ * Despite the path, this is a balance-history feed, not a list of the
+ * transactions created by `payments/create` or `invoices/create`. Three
+ * differences matter, and all three were found the hard way — by paying a real
+ * invoice and watching the match fail. See docs/api-findings.md.
+ *
+ *  - `id` identifies the history row, NOT the transaction. The transaction id
+ *    is `paymentLinkTransactionId`.
+ *  - The money field is `credit`. There is no `amount`, and asking for one
+ *    through `fields` does not produce it.
+ *  - `paymentLinkId` is the internal link Mayar generated for the payment, not
+ *    the product the checkout was for, so it cannot identify a demo product.
+ */
+export interface BalanceHistoryItem {
   id: string
   createdAt: number
-  type: string
+  /** The amount, in rupiah. Named `credit`, not `amount`. */
+  credit: number
+  /** "paid" once the money arrives, later "settled". Both mean paid. */
+  status: string
+  /** The id returned by a create endpoint. This is the real match key. */
+  paymentLinkTransactionId: string | null
+  paymentMethod: string | null
+  balanceHistoryType: string | null
+  customerId: string | null
+  customer: TransactionCustomer | null
+  /** The gateway's own id. This is what the hosted thank-you page URL shows. */
+  xenditTransactionId: string | null
+}
+
+/**
+ * A row from `GET /hl/v2/transactions/unpaid`.
+ *
+ * This one is shaped as expected: `id` is the transaction id and `amount` is
+ * present. The two list endpoints do not share a schema.
+ */
+export interface UnpaidTransactionItem {
+  id: string
+  createdAt: number
   amount: number
+  /** "active" while awaiting payment, "expired" after. */
   status: string
   paymentLinkId: string | null
   customerId: string | null
   customer: TransactionCustomer | null
 }
 
-export interface TransactionListResponse {
-  data: TransactionListItem[]
-  hasMore: boolean
-  nextStartingAfter: string | null
-}
+/** Balance-history statuses that mean the money has arrived. */
+export const PAID_STATUSES = new Set(["paid", "settled"])
 
-/** Documented status values on a transaction. */
-export type TransactionStatus = "created" | "unpaid" | "paid" | "expired"
+/**
+ * `GET /hl/v2/transactions/{id}`, keyed by the id a create endpoint returned.
+ *
+ * This is the authoritative view of one transaction, and unlike the list it
+ * does carry `amount` and a real transaction `status`.
+ */
+export interface TransactionDetail {
+  id: string
+  status: "created" | "unpaid" | "paid" | "expired" | string
+  amount: number
+  createdAt: number
+  paymentLinkId: string | null
+  customer?: TransactionCustomer | null
+}

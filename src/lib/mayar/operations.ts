@@ -2,9 +2,11 @@ import { mayarFetch, mayarFetchPage } from "./client"
 import type { MayarPage } from "./client"
 import type { MayarConfig } from "./config"
 import type {
+  BalanceHistoryItem,
   CreatePaymentRequest,
   CreatePaymentResponse,
-  TransactionListItem,
+  TransactionDetail,
+  UnpaidTransactionItem,
   ValidateCouponRequest,
   ValidateCouponResponse,
 } from "./types"
@@ -74,28 +76,47 @@ function toQuery(query: TransactionQuery): string {
 }
 
 /**
- * Lists paid transactions in a time window.
+ * Reads the balance history in a time window.
  *
- * The API has no amount filter, so matching a payment to an order by amount
- * means fetching the window and comparing here.
+ * `GET /hl/v2/transactions` returns balance-history rows, not transactions.
+ * A row's `paymentLinkTransactionId` is what matches an id from a create
+ * endpoint, and its money field is `credit`. There is no amount filter, so
+ * amount matching means fetching the window and comparing here.
  */
-export function listPaidTransactions(
+export function listBalanceHistory(
   config: MayarConfig,
   query: TransactionQuery = {}
-): Promise<MayarPage<TransactionListItem>> {
-  return mayarFetchPage<TransactionListItem>(
+): Promise<MayarPage<BalanceHistoryItem>> {
+  return mayarFetchPage<BalanceHistoryItem>(
     config,
     `/hl/v2/transactions${toQuery({ limit: MAX_PAGE, ...query })}`
   )
 }
 
-/** Lists transactions that exist but are not yet paid. */
+/** Lists transactions that exist but are not yet paid. Shaped differently. */
 export function listUnpaidTransactions(
   config: MayarConfig,
   query: TransactionQuery = {}
-): Promise<MayarPage<TransactionListItem>> {
-  return mayarFetchPage<TransactionListItem>(
+): Promise<MayarPage<UnpaidTransactionItem>> {
+  return mayarFetchPage<UnpaidTransactionItem>(
     config,
     `/hl/v2/transactions/unpaid${toQuery({ limit: MAX_PAGE, ...query })}`
+  )
+}
+
+/**
+ * Reads one transaction by the id a create endpoint returned.
+ *
+ * Unlike the list, this is authoritative and returns `status` and `amount`
+ * directly. It costs one request per order, so it is used to confirm a single
+ * order rather than to sweep for many.
+ */
+export function getTransaction(
+  config: MayarConfig,
+  transactionId: string
+): Promise<TransactionDetail> {
+  return mayarFetch<TransactionDetail>(
+    config,
+    `/hl/v2/transactions/${transactionId}`
   )
 }
