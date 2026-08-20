@@ -366,9 +366,15 @@ product was created with `creditValue`, `isAccumulateCredit`,
 `maxCreditTopup` all set, and it confirmed those values on read. The endpoints
 still answer 404.
 
-The remaining explanation is an account-level entitlement: the credit-wallet
-feature appears not to be switched on for this merchant. That cannot be fixed
-through the API and needs Mayar support.
+**Update, same day: it is not account-specific.** The same three endpoints were
+retried in the sandbox environment, against a different account
+(`ad732280-…`) and a `Test Credit Type` product created earlier through the
+dashboard rather than the API. They answer 404 there too.
+
+Two accounts, two environments, and a product created by hand all produce the
+same result, so an account entitlement no longer explains it. Either these
+paths are not deployed, or they differ from what both the documentation and the
+official CLI use. Confirming which needs Mayar support.
 
 ## 19. Tier-priced models cannot take a coupon
 
@@ -444,3 +450,25 @@ This is correct behaviour, but it makes renewal the normal path rather than the
 exception. A subscription checkout must look the member up and bill the
 existing record, not create a new one. Combined with finding 21, the lookup is
 easy to get wrong.
+
+## 23. Both sandbox hosts are real and interchangeable
+
+**Date:** 2026-08-20
+
+Finding 16's neighbour: the V2 reference documents the sandbox as
+`api.mayar.io`, while the official CLI targets `api.mayar.club`. One sandbox API
+key was tried against all three hosts:
+
+```
+api.mayar.io     -> 200  22 payment channels
+api.mayar.club   -> 200  22 payment channels
+api.mayar.id     -> 401  Unauthorized
+```
+
+They are aliases of the same environment, not two environments. Neither source
+is wrong. Production rejects a sandbox key outright, which at least makes a
+mixed-up key fail loudly rather than quietly.
+
+Note that the sandbox storefront origin differs too —
+`<merchant>.mayar.shop` rather than `<merchant>.myr.id` — so anything that
+prefixes a bare slug (finding 20) has to switch with the environment.
