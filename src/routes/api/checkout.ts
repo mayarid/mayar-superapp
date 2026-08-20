@@ -34,21 +34,6 @@ export const Route = createFileRoute("/api/checkout")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const ip = request.headers.get("CF-Connecting-IP") ?? "local"
-        const limiter = env.RATE_LIMITER.getByName(ip)
-        const verdict = await limiter.take()
-        if (!verdict.allowed) {
-          return Response.json(
-            {
-              error: `Terlalu banyak percobaan checkout. Coba lagi dalam ${verdict.retryAfterSeconds} detik.`,
-            },
-            {
-              status: 429,
-              headers: { "Retry-After": String(verdict.retryAfterSeconds) },
-            }
-          )
-        }
-
         let payload: CheckoutBody
         try {
           payload = await request.json<CheckoutBody>()
@@ -67,6 +52,24 @@ export const Route = createFileRoute("/api/checkout")({
         if (!EMAIL.test(email)) return bad("Email tidak sah.")
         if (mobile.replace(/\D/g, "").length < 8)
           return bad("Nomor telepon tidak sah.")
+
+        // Counted only once the request is well-formed enough to reach Mayar.
+        // The limit exists to protect the shared Mayar budget, and a request
+        // rejected above never touches it, so charging it a slot would punish
+        // a typo as harshly as abuse.
+        const ip = request.headers.get("CF-Connecting-IP") ?? "local"
+        const verdict = await env.RATE_LIMITER.getByName(ip).take()
+        if (!verdict.allowed) {
+          return Response.json(
+            {
+              error: `Terlalu banyak percobaan checkout. Coba lagi dalam ${verdict.retryAfterSeconds} detik.`,
+            },
+            {
+              status: 429,
+              headers: { "Retry-After": String(verdict.retryAfterSeconds) },
+            }
+          )
+        }
 
         const config = getMayarConfig()
         const gate = env.MAYAR_GATE.getByName("global")

@@ -1,8 +1,15 @@
 import { DurableObject } from "cloudflare:workers"
 
-/** Checkouts allowed per IP inside the window. */
+/**
+ * Checkouts allowed per IP inside the window.
+ *
+ * The window is short on purpose. A visitor who trips this is usually trying
+ * the demo, not attacking it, and a ten-minute lockout ends their visit. Three
+ * minutes still throttles a script hard enough to protect the shared Mayar
+ * budget, because a script cannot pay the invoices it creates.
+ */
 const LIMIT = 5
-const WINDOW_MS = 10 * 60 * 1000
+const WINDOW_MS = 3 * 60 * 1000
 
 export interface RateLimitVerdict {
   allowed: boolean
