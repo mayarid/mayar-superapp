@@ -1,0 +1,5 @@
+# Local development secrets for Cloudflare Workers.
+# Copy to .dev.vars and fill in. Never commit .dev.vars.
+#
+# Production key: https://web.mayar.id/api-keys
+MAYAR_API_KEY=""
