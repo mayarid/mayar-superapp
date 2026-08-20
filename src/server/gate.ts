@@ -1,6 +1,6 @@
 import { DurableObject } from "cloudflare:workers"
 import { getMayarConfig } from "../lib/mayar/config"
-import { listBalanceHistory } from "../lib/mayar/operations"
+import { getTransaction, listPaidBalanceHistory } from "../lib/mayar/operations"
 import { fulfil } from "./fulfillment"
 import {
   expireStale,
@@ -25,6 +25,18 @@ const RESERVED_FOR_USERS = 20
 
 /** How often the reconciler asks Mayar what has been paid. */
 const TICK_MS = 5_000
+
+/**
+ * How long to wait before confirming an order directly.
+ *
+ * The balance-history feed lags behind a transaction's own status, so a direct
+ * check straight away would spend a request to learn what the next tick would
+ * have told us for free.
+ */
+const DIRECT_CHECK_AFTER_MS = 15_000
+
+/** Direct confirmations allowed per tick. Each costs one request. */
+const MAX_DIRECT_CHECKS = 3
 
 /** How far back a payment can be matched to an order. */
 const MATCH_WINDOW_MS = 45 * 60 * 1000
@@ -120,6 +132,8 @@ export class MayarGate extends DurableObject<Env> {
     const pending = await listPending(db)
     if (pending.length === 0) return false
 
+    const config = getMayarConfig()
+
     const budget = await this.acquire(1, RESERVED_FOR_USERS)
     if (!budget.granted) {
       // Out of headroom this minute. Try again on the next tick rather than
@@ -127,22 +141,42 @@ export class MayarGate extends DurableObject<Env> {
       return true
     }
 
-    const oldest = Math.min(...pending.map((order) => order.created_at))
-    const page = await listBalanceHistory(getMayarConfig(), {
-      startAt: oldest - 60_000,
-      endAt: Date.now() + 60_000,
-    })
+    const page = await listPaidBalanceHistory(config)
 
     if (page.hasMore) {
-      // Never silently truncate. If this appears, the window is too wide or
-      // traffic outgrew a single page.
+      // Never silently truncate. If this appears, unsettled payments outgrew a
+      // single page and the cursor has to be followed.
       console.warn(
-        `reconcile: more than ${page.items.length} paid transactions in window; ` +
+        `reconcile: more than ${page.items.length} unsettled payments; ` +
           `cursor ${page.nextStartingAfter} not followed`
       )
     }
 
     await this.settle(db, pending, page.items)
+
+    // The balance history lags: a transaction reads "paid" on its own endpoint
+    // before its history row exists. Anything still waiting after that lag has
+    // passed is confirmed directly, which is authoritative but costs a request
+    // per order — hence the cap.
+    const stillWaiting = (await listPending(db)).filter(
+      (order) =>
+        order.transaction_id !== null &&
+        Date.now() - order.created_at > DIRECT_CHECK_AFTER_MS
+    )
+
+    for (const order of stillWaiting.slice(0, MAX_DIRECT_CHECKS)) {
+      const slot = await this.acquire(1, RESERVED_FOR_USERS)
+      if (!slot.granted) break
+      try {
+        const detail = await getTransaction(config, order.transaction_id!)
+        if (detail.status === "paid") {
+          await this.confirm(db, order, order.transaction_id!)
+        }
+      } catch (error) {
+        console.error(`direct check failed for ${order.id}`, error)
+      }
+    }
+
     return (await listPending(db)).length > 0
   }
 

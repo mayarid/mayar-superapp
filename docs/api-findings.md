@@ -290,6 +290,49 @@ buyer fields and no per-checkout amount.
 **The trade is therefore forced:** a checkout can know who is buying and apply a
 discount, or it can return the buyer to your site automatically. Not both.
 
+## 16. `startAt` and `endAt` are accepted and ignored
+
+**Date:** 2026-08-20
+**Endpoint:** `GET /hl/v2/transactions`
+
+The documentation lists `startAt` and `endAt` as Unix-millisecond bounds. They
+have no effect. Asking for rows starting *tomorrow* returns the same page as
+asking for none:
+
+```
+tanpa filter                 rows=30  newest=1787200118772
+startAt = one hour ago       rows=30  newest=1787200118772
+startAt = tomorrow           rows=30  newest=1787200118772   ← should be empty
+```
+
+Any design that narrows this feed by time is quietly reading whatever the
+endpoint felt like returning.
+
+## 17. `status=paid` is required, not an optimisation
+
+**Date:** 2026-08-20
+**Endpoint:** `GET /hl/v2/transactions`
+
+Following on from finding 16: with no way to narrow by time, the default page
+of 50 fills with old `settled` rows, and a payment made seconds ago is not in
+it. `status=paid` is what surfaces it:
+
+```
+no filter        rows=30  our payment present: false
+status=paid      rows=2   our payment present: true
+```
+
+This is how a second real payment went unnoticed even after finding 14 fixed
+the field mapping. The keys were right by then; the page simply did not contain
+the row.
+
+**There is also a lag.** `GET /hl/v2/transactions/{id}` reported `paid` while no
+balance-history row existed yet for that payment. The two views are not
+updated together, so a reconciler built only on the feed will be late, and one
+built only on per-transaction reads will be expensive. This codebase uses the
+feed first and falls back to a capped number of direct reads for orders still
+waiting after the lag window.
+
 ---
 
 ## Still unresolved

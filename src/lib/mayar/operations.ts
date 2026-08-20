@@ -76,20 +76,23 @@ function toQuery(query: TransactionQuery): string {
 }
 
 /**
- * Reads the balance history in a time window.
+ * Reads balance-history rows for payments that have arrived but not settled.
  *
  * `GET /hl/v2/transactions` returns balance-history rows, not transactions.
- * A row's `paymentLinkTransactionId` is what matches an id from a create
- * endpoint, and its money field is `credit`. There is no amount filter, so
- * amount matching means fetching the window and comparing here.
+ * A row's `paymentLinkTransactionId` matches an id from a create endpoint, and
+ * its money field is `credit`.
+ *
+ * `status=paid` is not an optimisation, it is required. Without it the endpoint
+ * returns a page dominated by old `settled` rows and a payment made seconds ago
+ * is not in it. `startAt` and `endAt` are accepted and ignored, so they cannot
+ * be used to narrow the page instead.
  */
-export function listBalanceHistory(
-  config: MayarConfig,
-  query: TransactionQuery = {}
+export function listPaidBalanceHistory(
+  config: MayarConfig
 ): Promise<MayarPage<BalanceHistoryItem>> {
   return mayarFetchPage<BalanceHistoryItem>(
     config,
-    `/hl/v2/transactions${toQuery({ limit: MAX_PAGE, ...query })}`
+    `/hl/v2/transactions${toQuery({ limit: MAX_PAGE, status: "paid" })}`
   )
 }
 
