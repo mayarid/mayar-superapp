@@ -196,7 +196,11 @@ export async function createCheckout(
       // sekali-bayar and fulfillment share this path. They differ only in what
       // happens once the money arrives.
       const payment = await createPayment(config, {
-        name: product.title,
+        // The label is folded in because Mayar rejects a second create that
+        // looks like the first, and two models share this endpoint at the
+        // same price. Without it, trying both in a row returns
+        // "Duplicate request detected".
+        name: `${product.title} (${product.label})`,
         amount: charged,
         email: buyer.email,
         mobile: buyer.mobile,

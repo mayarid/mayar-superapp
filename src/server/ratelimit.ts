@@ -3,13 +3,18 @@ import { DurableObject } from "cloudflare:workers"
 /**
  * Checkouts allowed per IP inside the window.
  *
- * The window is short on purpose. A visitor who trips this is usually trying
- * the demo, not attacking it, and a ten-minute lockout ends their visit. Three
- * minutes still throttles a script hard enough to protect the shared Mayar
- * budget, because a script cannot pay the invoices it creates.
+ * The point of this app is to try eight billing models one after another, so a
+ * cap of five would stop a visitor at the sixth page. The tight limit was set
+ * while running against production, where every checkout moved real money.
+ * In sandbox that reason is gone, so the cap only has to stop a runaway script
+ * from exhausting the shared 50 requests per minute.
+ *
+ * Production keeps the strict cap, because there the cost of abuse is money.
  */
-const LIMIT = 5
-const WINDOW_MS = 3 * 60 * 1000
+const LIMITS = {
+  production: { limit: 5, windowMs: 3 * 60 * 1000 },
+  sandbox: { limit: 40, windowMs: 5 * 60 * 1000 },
+} as const
 
 export interface RateLimitVerdict {
   allowed: boolean
@@ -26,7 +31,13 @@ export interface RateLimitVerdict {
  * other visitor.
  */
 export class RateLimiter extends DurableObject<Env> {
+  private get policy() {
+    const configured: string = this.env.MAYAR_ENV
+    return configured === "production" ? LIMITS.production : LIMITS.sandbox
+  }
+
   async take(): Promise<RateLimitVerdict> {
+    const { limit: LIMIT, windowMs: WINDOW_MS } = this.policy
     const now = Date.now()
     const hits = (await this.ctx.storage.get<number[]>("hits")) ?? []
     const fresh = hits.filter((at) => now - at < WINDOW_MS)
@@ -53,6 +64,7 @@ export class RateLimiter extends DurableObject<Env> {
   }
 
   async alarm(): Promise<void> {
+    const { windowMs: WINDOW_MS } = this.policy
     const now = Date.now()
     const hits = (await this.ctx.storage.get<number[]>("hits")) ?? []
     const fresh = hits.filter((at) => now - at < WINDOW_MS)
