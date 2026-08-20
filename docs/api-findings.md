@@ -473,7 +473,27 @@ Note that the sandbox storefront origin differs too —
 `<merchant>.mayar.shop` rather than `<merchant>.myr.id` — so anything that
 prefixes a bare slug (finding 20) has to switch with the environment.
 
-## 24. Sandbox rejects product types that production accepts
+## 24. WITHDRAWN — sandbox does not reject SAAS or CREDIT
+
+**Withdrawn 2026-08-20, the same day it was written.** The conclusion below was
+wrong, and it is left here because a retracted finding is more useful than a
+deleted one.
+
+`mayar membership product create` created both a SAAS and a CREDIT product in
+sandbox without complaint, moments after a hand-rolled POST to
+`/hl/v2/memberships/products/create` refused them. The payload was the same, so
+the CLI is not calling that path. The endpoint I guessed at exists and answers,
+but it is not the one that creates these products — and it fails with a message
+that sounds like a platform limit rather than a wrong address.
+
+**The lesson is the one the skill states outright: do not guess a path.** I had
+inferred this route from the CLI's command name rather than reading it, and the
+error message was plausible enough to build a false conclusion on.
+
+Note that finding 18 survives this: with a CREDIT product created properly by
+the CLI, `credit/generate/immutable/checkout` still answers 404.
+
+### Original claim, now withdrawn
 
 **Date:** 2026-08-20
 **Endpoint:** `POST /hl/v2/memberships/products/create`

@@ -149,7 +149,7 @@ export const CATALOG: Record<BillingModel, DemoProduct> = {
     label: "Dompet kredit",
     title: "Asisten AI Berbasis Kredit",
     tagline: "Beli kredit, terpotong tiap permintaan.",
-    productId: "f90cbbbd-d5e1-48a2-b591-20489fa1f5c0",
+    productId: "590c329a-0c78-4b46-a539-e6e4b11ca987",
     price: LIST_PRICE,
     coupons: [],
     couponBlocked: { reason: TIER_PRICED },
@@ -167,13 +167,11 @@ export const CATALOG: Record<BillingModel, DemoProduct> = {
     label: "Lisensi SaaS",
     title: "Aplikasi Desktop Berlisensi",
     tagline: "Lisensi diaktifkan dengan kode.",
-    productId: "8137866c-72d5-4b4d-891b-921d66916ee3",
+    productId: "2b155eab-6d43-4193-a4bf-5d0e1eb3f79e",
     price: LIST_PRICE,
     coupons: [],
     couponBlocked: { reason: TIER_PRICED },
     endpoint: "POST /saas/v2/license/activate dan /verify",
-    blocked:
-      "Sandbox menolak membuat produk SAAS lewat API — endpoint pembuatan produk membership di sana hanya menerima tipe MEMBERSHIP. Produknya harus dibuat lewat dashboard sandbox dulu.",
     includes: [
       "Satu kode lisensi",
       "Aktivasi di satu perangkat",
@@ -225,8 +223,8 @@ export const CATALOG: Record<BillingModel, DemoProduct> = {
 /** Membership tiers, needed by the models that sell through a tier. */
 export const TIERS = {
   membership: "fbc0f7a8-eb82-41b5-bad2-c2a796c39d5d",
-  kredit: "",
-  saas: "",
+  kredit: "3c41fe88-495b-478d-8d3c-47545043410e",
+  saas: "21c777a2-ecbe-4af0-8a1a-1ea5863caaba",
 } as const
 
 /** How many wallet units the credit tier grants per purchase. */

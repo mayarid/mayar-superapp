@@ -138,10 +138,14 @@
       "invoice": "e71fe36d-bc65-4971-85cb-11141e160e7d",
       "qris": "d294383e-a022-4f03-aa5b-3bd5b95098b1",
       "cicilan": "b29f4cb0-3d05-43a4-b202-6c8edf2174e0",
-      "membership": "989779f3-46bb-43f9-a8e6-e3f9992ad760"
+      "membership": "989779f3-46bb-43f9-a8e6-e3f9992ad760",
+      "saas": "2b155eab-6d43-4193-a4bf-5d0e1eb3f79e",
+      "kredit": "590c329a-0c78-4b46-a539-e6e4b11ca987"
     },
     "tiers": {
-      "membership": "fbc0f7a8-eb82-41b5-bad2-c2a796c39d5d"
+      "membership": "fbc0f7a8-eb82-41b5-bad2-c2a796c39d5d",
+      "saas": "21c777a2-ecbe-4af0-8a1a-1ea5863caaba",
+      "kredit": "3c41fe88-495b-478d-8d3c-47545043410e"
     },
     "coupons": {
       "sekali-bayar": [
