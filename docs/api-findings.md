@@ -545,9 +545,27 @@ validates coupons under `/hl/v2` is refused on the licence path:
 ```
 
 This is an authentication failure, not "licence not found", so it happens
-before the code is even considered. Either the licence endpoints expect a
-different credential, or `/saas/v2` is served from a host other than the one
-`/hl/v2` uses.
+before the code is even considered.
+
+**Confirmed through the official CLI**, not just our own client — `mayar saas
+verify` and `mayar saas activate` both return the same 401. So it is not our
+path or our request.
+
+The sharpest evidence is the contrast with the *software* licence path. Same
+key, same product, same invented code:
+
+```
+mayar saas     verify -> 401 Failed authentication
+mayar software verify -> 400 "There's no license with code KODE-NGAWUR-123 and
+                              product id 2b155eab-… registered in user …"
+```
+
+The software path authenticates and reaches the licence lookup. Only the SaaS
+group refuses the credential, which points at that group's authentication
+rather than at the key.
+
+**Practical consequence:** `software verify` works today and `saas verify` does
+not, so a licence check can be built on the software path in the meantime.
 
 Worth noting how easy this is to misread: with an invented code in the field,
 "failed authentication" looks like the code being rejected. It is not — the

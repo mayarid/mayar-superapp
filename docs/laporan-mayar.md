@@ -16,9 +16,10 @@ memblokir, hanya membuat integrasi lebih lama dipelajari.
 
 ---
 
-## 1. `/saas/v2` menolak API key yang diterima `/hl/v2`
+## 1. `/saas/v2` menolak API key yang diterima endpoint lain
 
 **Lingkungan:** sandbox, `https://api.mayar.io`
+**Diuji lewat:** `mayar-cli` resmi (bukan klien kami sendiri)
 
 API key yang sama berhasil di `/hl/v2`:
 
@@ -28,21 +29,29 @@ POST /hl/v2/payments/create    -> 200
 POST /hl/v2/coupons/validate   -> 200
 ```
 
-Tetapi ditolak di `/saas/v2`:
+Tetapi ditolak di grup lisensi SaaS:
 
 ```
-POST /saas/v2/license/activate -> {"messages":"Failed authentication! Please check your token authorization."}
-POST /saas/v2/license/verify   -> {"messages":"Failed authentication! Please check your token authorization."}
+mayar saas verify   <kode> <productId>  -> 401 "Failed authentication! Please check your token authorization."
+mayar saas activate <kode> <productId>  -> 401 "Failed authentication! Please check your token authorization."
 ```
 
-Header yang dikirim identik: `Authorization: Bearer <key>`.
+**Kontras yang menurut kami paling menunjuk:** dengan API key, produk, dan kode
+yang sama persis, perintah lisensi software justru terautentikasi dengan baik
+dan sampai ke pemeriksaan kode:
 
-Karena ini galat autentikasi, permintaannya ditolak sebelum kode lisensi
-sempat diperiksa.
+```
+mayar software verify <kode> <productId>
+-> 400 "There's no license with code KODE-NGAWUR-123 and product id 2b155eab-... registered in user ..."
+```
 
-**Pertanyaan kami:** apakah endpoint lisensi memakai kredensial yang berbeda
-dari API key biasa, atau dilayani dari host lain? Kami tidak menemukan
-keterangannya di dokumentasi.
+Jadi kunci yang sama diterima di jalur lisensi software, tetapi ditolak di
+jalur lisensi SaaS. Karena galatnya autentikasi, permintaan SaaS berhenti
+sebelum kode lisensinya sempat diperiksa.
+
+**Pertanyaan kami:** apakah grup `/saas/v2` memakai kredensial berbeda, atau
+ada yang belum tersambung di sisi autentikasinya? Perbedaannya dengan jalur
+software membuat kami menduga yang kedua.
 
 ---
 
