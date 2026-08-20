@@ -26,6 +26,7 @@ export function getMayarConfig(): MayarConfig {
   // literal currently in wrangler.jsonc, which would make this comparison look
   // constant to the type checker even though the deployed value can differ.
   const configured: string = env.MAYAR_ENV
+  const overrideUrl: string = env.MAYAR_API_URL
 
   return {
     apiKey,
@@ -33,6 +34,6 @@ export function getMayarConfig(): MayarConfig {
     // The sandbox host is not settled: the API reference gives
     // api.mayar.io, the official CLI targets api.mayar.club, and both
     // answer. Rather than pick one silently, the URL can be set explicitly.
-    baseUrl: env.MAYAR_API_URL || undefined,
+    baseUrl: overrideUrl.length > 0 ? overrideUrl : undefined,
   }
 }
