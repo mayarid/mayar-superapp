@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router"
 import { ArrowLeftIcon, CheckIcon, InfoIcon } from "lucide-react"
+import { LicensePanel } from "@/components/billing/license-panel"
 import { ProductionNotice } from "@/components/billing/production-notice"
 import { CheckoutForm } from "@/components/checkout/checkout-form"
 import { ResumeOrder } from "@/components/checkout/resume-order"
@@ -76,6 +77,8 @@ export function BillingPage({ product }: { product: DemoProduct }) {
               </ul>
             </CardContent>
           </Card>
+
+          {product.model === "saas" ? <LicensePanel /> : null}
 
           <Card>
             <CardHeader>

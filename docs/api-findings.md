@@ -531,3 +531,24 @@ payment link    -> https://faizintifada.myr.lat/invoices/...
 Production uses `<merchant>.myr.id` for both. Anything that expands the bare
 instalment slug (finding 20) has to use the invoice origin, not the storefront
 one, or it builds links that 404.
+
+## 26. `/saas/v2` rejects the key that `/hl/v2` accepts
+
+**Date:** 2026-08-20
+**Endpoints:** `POST /saas/v2/license/activate`, `POST /saas/v2/license/verify`
+
+The same sandbox API key that reads payment channels, creates payments, and
+validates coupons under `/hl/v2` is refused on the licence path:
+
+```json
+{ "messages": "Failed authentication! Please check your token authorization." }
+```
+
+This is an authentication failure, not "licence not found", so it happens
+before the code is even considered. Either the licence endpoints expect a
+different credential, or `/saas/v2` is served from a host other than the one
+`/hl/v2` uses.
+
+Worth noting how easy this is to misread: with an invented code in the field,
+"failed authentication" looks like the code being rejected. It is not — the
+request never got that far.

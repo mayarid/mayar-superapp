@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiCheckoutRouteImport } from './routes/api/checkout'
 import { Route as ApiCouponRouteImport } from './routes/api/coupon'
+import { Route as ApiLicenseRouteImport } from './routes/api/license'
 import { Route as BillingCicilanRouteImport } from './routes/billing/cicilan'
 import { Route as BillingDompetKreditRouteImport } from './routes/billing/dompet-kredit'
 import { Route as BillingInvoiceBerbutirRouteImport } from './routes/billing/invoice-berbutir'
@@ -37,6 +38,11 @@ const ApiCheckoutRoute = ApiCheckoutRouteImport.update({
 const ApiCouponRoute = ApiCouponRouteImport.update({
   id: '/api/coupon',
   path: '/api/coupon',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiLicenseRoute = ApiLicenseRouteImport.update({
+  id: '/api/license',
+  path: '/api/license',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BillingCicilanRoute = BillingCicilanRouteImport.update({
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/checkout': typeof ApiCheckoutRoute
   '/api/coupon': typeof ApiCouponRoute
+  '/api/license': typeof ApiLicenseRoute
   '/billing/cicilan': typeof BillingCicilanRoute
   '/billing/dompet-kredit': typeof BillingDompetKreditRoute
   '/billing/invoice-berbutir': typeof BillingInvoiceBerbutirRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/checkout': typeof ApiCheckoutRoute
   '/api/coupon': typeof ApiCouponRoute
+  '/api/license': typeof ApiLicenseRoute
   '/billing/cicilan': typeof BillingCicilanRoute
   '/billing/dompet-kredit': typeof BillingDompetKreditRoute
   '/billing/invoice-berbutir': typeof BillingInvoiceBerbutirRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/api/checkout': typeof ApiCheckoutRoute
   '/api/coupon': typeof ApiCouponRoute
+  '/api/license': typeof ApiLicenseRoute
   '/billing/cicilan': typeof BillingCicilanRoute
   '/billing/dompet-kredit': typeof BillingDompetKreditRoute
   '/billing/invoice-berbutir': typeof BillingInvoiceBerbutirRoute
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api/checkout'
     | '/api/coupon'
+    | '/api/license'
     | '/billing/cicilan'
     | '/billing/dompet-kredit'
     | '/billing/invoice-berbutir'
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api/checkout'
     | '/api/coupon'
+    | '/api/license'
     | '/billing/cicilan'
     | '/billing/dompet-kredit'
     | '/billing/invoice-berbutir'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api/checkout'
     | '/api/coupon'
+    | '/api/license'
     | '/billing/cicilan'
     | '/billing/dompet-kredit'
     | '/billing/invoice-berbutir'
@@ -200,6 +212,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiCheckoutRoute: typeof ApiCheckoutRoute
   ApiCouponRoute: typeof ApiCouponRoute
+  ApiLicenseRoute: typeof ApiLicenseRoute
   BillingCicilanRoute: typeof BillingCicilanRoute
   BillingDompetKreditRoute: typeof BillingDompetKreditRoute
   BillingInvoiceBerbutirRoute: typeof BillingInvoiceBerbutirRoute
@@ -234,6 +247,13 @@ declare module '@tanstack/react-router' {
       path: '/api/coupon'
       fullPath: '/api/coupon'
       preLoaderRoute: typeof ApiCouponRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/license': {
+      id: '/api/license'
+      path: '/api/license'
+      fullPath: '/api/license'
+      preLoaderRoute: typeof ApiLicenseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/billing/cicilan': {
@@ -320,6 +340,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiCheckoutRoute: ApiCheckoutRoute,
   ApiCouponRoute: ApiCouponRoute,
+  ApiLicenseRoute: ApiLicenseRoute,
   BillingCicilanRoute: BillingCicilanRoute,
   BillingDompetKreditRoute: BillingDompetKreditRoute,
   BillingInvoiceBerbutirRoute: BillingInvoiceBerbutirRoute,
