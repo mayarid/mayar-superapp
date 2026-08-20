@@ -136,3 +136,185 @@ export interface TransactionDetail {
   paymentLinkId: string | null
   customer?: TransactionCustomer | null
 }
+
+/* -------------------------------------------------------------------------- */
+/* Invoice — /hl/v2/invoices/create                                           */
+/* -------------------------------------------------------------------------- */
+
+export interface InvoiceItem {
+  quantity: number
+  /** Unit price. Must be positive: a discount cannot be a negative line. */
+  rate: number
+  description: string
+}
+
+export interface CreateInvoiceRequest {
+  /** Customer full name. Unlike payments/create, this really is the buyer. */
+  name: string
+  email: string
+  mobile: string
+  items: InvoiceItem[]
+  description?: string
+  /** ISO 8601. */
+  expiredAt?: string
+  tax?: number
+  paymentMethod?: string
+  extraData?: Record<string, unknown>
+}
+
+export interface CreateInvoiceResponse {
+  id: string
+  transactionId: string
+  link: string
+  expiredAt: number
+  extraData?: Record<string, unknown>
+}
+
+/* -------------------------------------------------------------------------- */
+/* Dynamic QRIS — /hl/v2/qr-codes/create                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The entire request is one integer, and the response carries no identifier.
+ * That is why the QRIS model reconciles on a unique amount: the amount is the
+ * only thing that can tell two of these apart.
+ */
+export interface CreateQrCodeResponse {
+  /** An image URL to render. Not an EMVCo payload string. */
+  url: string
+  amount: number
+}
+
+/* -------------------------------------------------------------------------- */
+/* Installments — /hl/v2/installments/create                                  */
+/* -------------------------------------------------------------------------- */
+
+export interface InstallmentTerms {
+  description: string
+  interest: number
+  /** Months. Documented minimum 3, maximum 24. */
+  tenure: number
+  /** Day of month the instalment falls due. Minimum 1, maximum 28. */
+  dueDate: number
+}
+
+export interface CreateInstallmentRequest {
+  name: string
+  email: string
+  mobile: string
+  amount: number
+  installment: InstallmentTerms
+}
+
+export interface InstallmentInvoice {
+  id: string
+  amount: number
+  dueDate: number
+  status: string
+  link: string
+}
+
+export interface CreateInstallmentResponse {
+  id: string
+  amount: number
+  totalAmount: number
+  totalInterest: number
+  tenure: number
+  dueDate: number
+  status: string
+  invoices: InstallmentInvoice[]
+  createdAt: string
+}
+
+/* -------------------------------------------------------------------------- */
+/* Membership — /hl/v2/memberships/*                                          */
+/* -------------------------------------------------------------------------- */
+
+export interface CustomerInfo {
+  name: string
+  email: string
+  mobile: string
+}
+
+export interface RegisterMemberRequest {
+  productId: string
+  membershipTierId: string
+  customerInfo: CustomerInfo
+  /** Billing cycle in months. */
+  membershipMonthlyPeriod: number
+}
+
+export interface RegisterMemberResponse {
+  membershipCustomer: {
+    id: string
+    memberId: string
+    customerId: string
+    membershipTierId: string
+    paymentLinkId: string
+    monthlyPaymentPeriod: number
+    status: string
+    nextPayment: string | null
+    expiredAt: string | null
+  }
+}
+
+/**
+ * The invoice for one membership term.
+ *
+ * `amount` is computed from the tier. There is no parameter to override it, so
+ * a coupon cannot be applied on this path. See docs/api-findings.md.
+ */
+export interface CreateMembershipInvoiceResponse {
+  id: string
+  transactionId: string
+  customerId: string
+  membershipTierId: string
+  amount: number
+  status: string
+  expiredAt: string
+  membershipBillUrl: string
+}
+
+/* -------------------------------------------------------------------------- */
+/* Credit wallet — /hl/v2/credit/*                                            */
+/* -------------------------------------------------------------------------- */
+
+export interface CreditCheckoutRequest {
+  productId: string
+  customerInfo: CustomerInfo
+  creditAmount: number
+}
+
+/**
+ * Only a link comes back. No transaction id, which is why the credit model
+ * reconciles on the buyer's email inside a time window.
+ */
+export interface CreditCheckoutResponse {
+  checkoutLink: string
+}
+
+export interface CreditMutationRequest {
+  customerId: string
+  productId: string
+  membershipTierId?: string
+  amount: number
+}
+
+export interface CreditMutationResponse {
+  customerNewBalance: number
+}
+
+/* -------------------------------------------------------------------------- */
+/* Licences — /saas/v2/license/*                                              */
+/* -------------------------------------------------------------------------- */
+
+export interface LicenseRequest {
+  licenseCode: string
+  productId: string
+}
+
+/** These endpoints answer with a status and a message only. */
+export interface LicenseResponse {
+  status?: string
+  message?: string
+}

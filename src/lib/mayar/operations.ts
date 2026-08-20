@@ -3,8 +3,22 @@ import type { MayarPage } from "./client"
 import type { MayarConfig } from "./config"
 import type {
   BalanceHistoryItem,
+  CreateInstallmentRequest,
+  CreateInstallmentResponse,
+  CreateInvoiceRequest,
+  CreateInvoiceResponse,
+  CreateMembershipInvoiceResponse,
   CreatePaymentRequest,
   CreatePaymentResponse,
+  CreateQrCodeResponse,
+  CreditCheckoutRequest,
+  CreditCheckoutResponse,
+  CreditMutationRequest,
+  CreditMutationResponse,
+  LicenseRequest,
+  LicenseResponse,
+  RegisterMemberRequest,
+  RegisterMemberResponse,
   TransactionDetail,
   UnpaidTransactionItem,
   ValidateCouponRequest,
@@ -66,7 +80,7 @@ interface TransactionQuery {
   status?: string
 }
 
-function toQuery(query: TransactionQuery): string {
+function toQuery(query: Record<string, unknown>): string {
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(query)) {
     if (value !== undefined && value !== null) params.set(key, String(value))
@@ -121,5 +135,165 @@ export function getTransaction(
   return mayarFetch<TransactionDetail>(
     config,
     `/hl/v2/transactions/${transactionId}`
+  )
+}
+
+/**
+ * Creates an itemised invoice.
+ *
+ * A discount reaches this endpoint as lowered line rates, never as its own
+ * line: `items[].rate` must be positive. The buyer therefore does not see the
+ * discount broken out on Mayar's hosted invoice.
+ */
+export function createInvoice(
+  config: MayarConfig,
+  payload: CreateInvoiceRequest
+): Promise<CreateInvoiceResponse> {
+  return mayarFetch<CreateInvoiceResponse>(
+    config,
+    "/hl/v2/invoices/create",
+    body(payload)
+  )
+}
+
+/**
+ * Creates a dynamic QRIS code for one amount.
+ *
+ * The request is the amount and nothing else, and the response has no
+ * identifier to poll. Give it an amount made unique by the caller, or the
+ * payment cannot be told from any other of the same value.
+ */
+export function createQrCode(
+  config: MayarConfig,
+  amount: number
+): Promise<CreateQrCodeResponse> {
+  return mayarFetch<CreateQrCodeResponse>(
+    config,
+    "/hl/v2/qr-codes/create",
+    body({ amount })
+  )
+}
+
+/** Creates an instalment plan. Tenure must be 3 to 24 months. */
+export function createInstallment(
+  config: MayarConfig,
+  payload: CreateInstallmentRequest
+): Promise<CreateInstallmentResponse> {
+  return mayarFetch<CreateInstallmentResponse>(
+    config,
+    "/hl/v2/installments/create",
+    body(payload)
+  )
+}
+
+/** Registers a member. This creates the membership record, not a payable bill. */
+export function registerMember(
+  config: MayarConfig,
+  payload: RegisterMemberRequest
+): Promise<RegisterMemberResponse> {
+  return mayarFetch<RegisterMemberResponse>(
+    config,
+    "/hl/v2/memberships/members/create",
+    body(payload)
+  )
+}
+
+/**
+ * Raises the bill for one membership term.
+ *
+ * Idempotent per billing term: calling it again inside the same period returns
+ * the existing unpaid invoice rather than a second one. The amount comes from
+ * the tier and cannot be overridden, so no coupon applies here.
+ */
+export function createMembershipInvoice(
+  config: MayarConfig,
+  memberId: string,
+  productId: string
+): Promise<CreateMembershipInvoiceResponse> {
+  return mayarFetch<CreateMembershipInvoiceResponse>(
+    config,
+    `/hl/v2/memberships/members/${memberId}/invoice/create`,
+    body({ productId })
+  )
+}
+
+/**
+ * Builds a checkout link for a credit top-up.
+ *
+ * Customer details are embedded in an HMAC-signed token, so the link cannot be
+ * edited after it is made. No transaction id comes back, which is why this
+ * model reconciles on the buyer's email.
+ */
+export function createCreditCheckout(
+  config: MayarConfig,
+  payload: CreditCheckoutRequest
+): Promise<CreditCheckoutResponse> {
+  return mayarFetch<CreditCheckoutResponse>(
+    config,
+    "/hl/v2/credit/generate/immutable/checkout",
+    body(payload)
+  )
+}
+
+/** Adds wallet units to a customer. */
+export function addCredit(
+  config: MayarConfig,
+  payload: CreditMutationRequest
+): Promise<CreditMutationResponse> {
+  return mayarFetch<CreditMutationResponse>(
+    config,
+    "/hl/v2/credit/customer/add-credit",
+    body(payload)
+  )
+}
+
+/** Consumes wallet units. This is the call a metered feature would make. */
+export function spendCredit(
+  config: MayarConfig,
+  payload: CreditMutationRequest
+): Promise<CreditMutationResponse> {
+  return mayarFetch<CreditMutationResponse>(
+    config,
+    "/hl/v2/credit/spend",
+    body(payload)
+  )
+}
+
+/** Reads a customer's remaining wallet balance. */
+export function getCreditBalance(
+  config: MayarConfig,
+  query: { customerId: string; productId: string; membershipTierId?: string }
+): Promise<CreditMutationResponse> {
+  return mayarFetch<CreditMutationResponse>(
+    config,
+    `/hl/v2/credit/balance${toQuery(query)}`
+  )
+}
+
+/**
+ * Licence operations.
+ *
+ * These live under `/saas/v2`, the only endpoints in this app that do not use
+ * the `/hl/v2` prefix.
+ */
+export function activateLicense(
+  config: MayarConfig,
+  payload: LicenseRequest
+): Promise<LicenseResponse> {
+  return mayarFetch<LicenseResponse>(
+    config,
+    "/saas/v2/license/activate",
+    body(payload)
+  )
+}
+
+export function verifyLicense(
+  config: MayarConfig,
+  payload: LicenseRequest
+): Promise<LicenseResponse> {
+  return mayarFetch<LicenseResponse>(
+    config,
+    "/saas/v2/license/verify",
+    body(payload)
   )
 }
