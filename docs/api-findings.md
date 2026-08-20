@@ -472,3 +472,42 @@ mixed-up key fail loudly rather than quietly.
 Note that the sandbox storefront origin differs too —
 `<merchant>.mayar.shop` rather than `<merchant>.myr.id` — so anything that
 prefixes a bare slug (finding 20) has to switch with the environment.
+
+## 24. Sandbox rejects product types that production accepts
+
+**Date:** 2026-08-20
+**Endpoint:** `POST /hl/v2/memberships/products/create`
+
+Finding 9 recorded that this undocumented endpoint creates all three product
+families, with `membershipInfo.type` of `MEMBERSHIP`, `SAAS`, or `CREDIT`. That
+holds in production. Sandbox refuses two of them outright:
+
+```
+membershipInfo.type "SAAS" is not supported by this endpoint.
+Only "MEMBERSHIP" products can be created here.
+```
+
+So the two environments are not running the same API. Sandbox is the stricter
+of the pair, which suggests production is the older deployment rather than the
+more capable one — and that the SaaS and credit products created there may have
+been accepted without ever being fully valid. That fits finding 18, where a
+CREDIT product read back correctly and every credit endpoint still answered 404.
+
+**Sandbox is therefore not a safe rehearsal for production here.** A call that
+works in one may fail in the other, in both directions.
+
+## 25. The sandbox invoice origin differs from its storefront origin
+
+**Date:** 2026-08-20
+
+Sandbox lists products under `<merchant>.mayar.shop`, but the payment links it
+returns are served from `<merchant>.myr.lat`:
+
+```
+product listing -> https://faizintifada.mayar.shop/pl/...
+payment link    -> https://faizintifada.myr.lat/invoices/...
+```
+
+Production uses `<merchant>.myr.id` for both. Anything that expands the bare
+instalment slug (finding 20) has to use the invoice origin, not the storefront
+one, or it builds links that 404.

@@ -14,7 +14,7 @@
   // Non-secret configuration. MAYAR_API_KEY is a secret and is never stored
   // here — set it with: bunx wrangler secret put MAYAR_API_KEY
   "vars": {
-    "MAYAR_ENV": "production",
+    "MAYAR_ENV": "sandbox",
     // Leave empty to use the default host for MAYAR_ENV. Set this to settle
     // the sandbox host dispute (api.mayar.io vs api.mayar.club).
     "MAYAR_API_URL": "",

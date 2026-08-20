@@ -4,6 +4,12 @@ import type { Rupiah } from "./money"
 /**
  * Server-owned product data.
  *
+ * The identifiers below belong to the **sandbox** account. They are not valid
+ * in production, and swapping environments means swapping this file — the
+ * production set is kept in demo-catalog.json. Making one catalog serve both
+ * environments is the next refactor; until then the environment this file
+ * targets is stated here rather than left to be discovered at runtime.
+ *
  * Prices are never taken from the client. A checkout request names a model and
  * the server looks the price up here, so a tampered request cannot lower what
  * Mayar is asked to charge.
@@ -60,7 +66,7 @@ export const CATALOG: Record<BillingModel, DemoProduct> = {
     label: "Sekali bayar",
     title: "Template Notion Perencana Konten",
     tagline: "Satu berkas, sekali bayar, langsung dipakai.",
-    productId: "d14287f3-3e94-4b20-9e7a-353b26edfcf2",
+    productId: "b9d4f1d8-4795-4312-b8ed-3a20ef890324",
     price: LIST_PRICE,
     coupons: ["SEKALI50", "SEKALI1K"],
     couponBlocked: null,
@@ -81,7 +87,7 @@ export const CATALOG: Record<BillingModel, DemoProduct> = {
     label: "Sekali bayar + fulfillment",
     title: "Paket Ikon Antarmuka",
     tagline: "Sekali bayar, tautan unduhan terbit sendiri setelah lunas.",
-    productId: "7999277b-eaf4-45c9-bd45-57c55e7bb6f8",
+    productId: "9ac58aba-35cd-4388-9b16-2daac476fba2",
     price: LIST_PRICE,
     coupons: ["FULFILL50", "FULFILL1K"],
     couponBlocked: null,
@@ -102,7 +108,7 @@ export const CATALOG: Record<BillingModel, DemoProduct> = {
     label: "Invoice berbutir",
     title: "Jasa Desain Per Proyek",
     tagline: "Tagihan dengan beberapa baris pekerjaan.",
-    productId: "0df14920-464a-4345-847c-a9128d29660c",
+    productId: "e71fe36d-bc65-4971-85cb-11141e160e7d",
     price: LIST_PRICE,
     coupons: ["INVOICE50", "INVOICE1K"],
     couponBlocked: null,
@@ -122,7 +128,7 @@ export const CATALOG: Record<BillingModel, DemoProduct> = {
     label: "Membership",
     title: "Kelas Menulis Bulanan",
     tagline: "Langganan bulanan dengan tagihan per termin.",
-    productId: "9b52b22e-1a0c-4fd7-b9c3-c66c234b83f5",
+    productId: "989779f3-46bb-43f9-a8e6-e3f9992ad760",
     price: LIST_PRICE,
     coupons: [],
     couponBlocked: { reason: TIER_PRICED },
@@ -152,7 +158,7 @@ export const CATALOG: Record<BillingModel, DemoProduct> = {
     mechanics:
       "Checkout kredit mengembalikan tautan saja, tanpa nomor transaksi, jadi pencocokan pembayarannya bersandar pada email pembeli dalam jendela waktu.",
     blocked:
-      "Seluruh grup endpoint /hl/v2/credit/* menjawab 404 di akun ini, walau produknya terbaca aktif dan bertipe CREDIT. Fitur dompet kredit tampaknya belum dibuka untuk merchant ini.",
+      "Seluruh grup endpoint /hl/v2/credit/* menjawab 404 — di produksi maupun sandbox, di dua akun berbeda, termasuk pada produk yang dibuat lewat dashboard. Jadi ini bukan soal izin akun. Entah path-nya belum di-deploy, entah berbeda dari yang dipakai dokumen dan CLI resmi.",
   },
 
   saas: {
@@ -166,6 +172,8 @@ export const CATALOG: Record<BillingModel, DemoProduct> = {
     coupons: [],
     couponBlocked: { reason: TIER_PRICED },
     endpoint: "POST /saas/v2/license/activate dan /verify",
+    blocked:
+      "Sandbox menolak membuat produk SAAS lewat API — endpoint pembuatan produk membership di sana hanya menerima tipe MEMBERSHIP. Produknya harus dibuat lewat dashboard sandbox dulu.",
     includes: [
       "Satu kode lisensi",
       "Aktivasi di satu perangkat",
@@ -181,7 +189,7 @@ export const CATALOG: Record<BillingModel, DemoProduct> = {
     label: "QRIS dinamis",
     title: "Kasir Kedai Kopi",
     tagline: "QRIS on-demand, dipindai langsung di tempat.",
-    productId: "d901cbe2-9a29-4146-9113-24aebc840fb5",
+    productId: "d294383e-a022-4f03-aa5b-3bd5b95098b1",
     price: LIST_PRICE,
     coupons: ["QRIS50", "QRIS1K"],
     couponBlocked: null,
@@ -197,7 +205,7 @@ export const CATALOG: Record<BillingModel, DemoProduct> = {
     label: "Cicilan",
     title: "Kursus Daring Berbayar Cicil",
     tagline: "Bayar bertahap selama tiga bulan.",
-    productId: "c19b9bd6-974e-4f59-b170-37ea032f5c01",
+    productId: "b29f4cb0-3d05-43a4-b202-6c8edf2174e0",
     // Higher than the others on purpose: the total is split across terms, and
     // every term still has to clear the Rp1.000 floor.
     price: 6000,
@@ -216,9 +224,9 @@ export const CATALOG: Record<BillingModel, DemoProduct> = {
 
 /** Membership tiers, needed by the models that sell through a tier. */
 export const TIERS = {
-  membership: "7ce53f2a-b055-4a18-a04e-0eaabb3c2151",
-  kredit: "47a680f9-414b-4e93-822e-899f2dae0ffc",
-  saas: "d1db3f30-550d-4881-9eb0-c535559f55eb",
+  membership: "fbc0f7a8-eb82-41b5-bad2-c2a796c39d5d",
+  kredit: "",
+  saas: "",
 } as const
 
 /** How many wallet units the credit tier grants per purchase. */

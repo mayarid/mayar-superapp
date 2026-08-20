@@ -1,132 +1,170 @@
 {
-  "_note": "Mayar production account faiz-intifada. Demo products carry the superapp-demo- prefix. List price is Rp2.000 so a coupon lands exactly on the Rp1.000 floor.",
-  "merchant": "faiz-intifada.myr.id",
-  "listPrice": 2000,
-  "floorPrice": 1000,
-  "anchors": {
-    "sekali-bayar": "d14287f3-3e94-4b20-9e7a-353b26edfcf2",
-    "fulfillment": "7999277b-eaf4-45c9-bd45-57c55e7bb6f8",
-    "invoice": "0df14920-464a-4345-847c-a9128d29660c",
-    "qris": "d901cbe2-9a29-4146-9113-24aebc840fb5",
-    "cicilan": "c19b9bd6-974e-4f59-b170-37ea032f5c01",
-    "membership": "9b52b22e-1a0c-4fd7-b9c3-c66c234b83f5",
-    "saas": "8137866c-72d5-4b4d-891b-921d66916ee3",
-    "kredit": "f90cbbbd-d5e1-48a2-b591-20489fa1f5c0"
-  },
-  "coupons": {
-    "sekali-bayar": {
-      "SEKALI50": {
-        "discountId": "3b994421-750d-4136-9da1-7748533be8cb",
-        "discountType": "percentage",
-        "value": 50
+  "production": {
+    "_note": "Mayar production account faiz-intifada. Demo products carry the superapp-demo- prefix. List price is Rp2.000 so a coupon lands exactly on the Rp1.000 floor.",
+    "merchant": "faiz-intifada.myr.id",
+    "listPrice": 2000,
+    "floorPrice": 1000,
+    "anchors": {
+      "sekali-bayar": "d14287f3-3e94-4b20-9e7a-353b26edfcf2",
+      "fulfillment": "7999277b-eaf4-45c9-bd45-57c55e7bb6f8",
+      "invoice": "0df14920-464a-4345-847c-a9128d29660c",
+      "qris": "d901cbe2-9a29-4146-9113-24aebc840fb5",
+      "cicilan": "c19b9bd6-974e-4f59-b170-37ea032f5c01",
+      "membership": "9b52b22e-1a0c-4fd7-b9c3-c66c234b83f5",
+      "saas": "8137866c-72d5-4b4d-891b-921d66916ee3",
+      "kredit": "f90cbbbd-d5e1-48a2-b591-20489fa1f5c0"
+    },
+    "coupons": {
+      "sekali-bayar": {
+        "SEKALI50": {
+          "discountId": "3b994421-750d-4136-9da1-7748533be8cb",
+          "discountType": "percentage",
+          "value": 50
+        },
+        "SEKALI1K": {
+          "discountId": "3887ad54-909f-4f59-9323-25185525c140",
+          "discountType": "monetary",
+          "value": 1000
+        }
       },
-      "SEKALI1K": {
-        "discountId": "3887ad54-909f-4f59-9323-25185525c140",
-        "discountType": "monetary",
-        "value": 1000
+      "fulfillment": {
+        "FULFILL50": {
+          "discountId": "32543831-ca73-47dd-8dcd-926432342514",
+          "discountType": "percentage",
+          "value": 50
+        },
+        "FULFILL1K": {
+          "discountId": "7d2d9bfe-8594-4d85-a463-bdd5da0a3609",
+          "discountType": "monetary",
+          "value": 1000
+        }
+      },
+      "invoice": {
+        "INVOICE50": {
+          "discountId": "ef635e69-f088-44f2-86ed-2bb421a83ac9",
+          "discountType": "percentage",
+          "value": 50
+        },
+        "INVOICE1K": {
+          "discountId": "7d395e18-7436-438f-885c-7919ed4ae2e4",
+          "discountType": "monetary",
+          "value": 1000
+        }
+      },
+      "qris": {
+        "QRIS50": {
+          "discountId": "735691f7-953d-4b04-8437-7d0b6d0fea5d",
+          "discountType": "percentage",
+          "value": 50
+        },
+        "QRIS1K": {
+          "discountId": "47448bb4-92fd-4734-bddd-8a99e654b794",
+          "discountType": "monetary",
+          "value": 1000
+        }
+      },
+      "cicilan": {
+        "CICILAN50": {
+          "discountId": "f120dc68-0a87-470e-9aca-aac260b6d92c",
+          "discountType": "percentage",
+          "value": 50
+        },
+        "CICILAN1K": {
+          "discountId": "843a7aab-da4d-42c0-8967-d6d59ef57712",
+          "discountType": "monetary",
+          "value": 1000
+        }
+      },
+      "saas": {
+        "SAAS50": {
+          "discountId": "78383e7c-4cc0-4882-a1ca-9d945f1298a1",
+          "discountType": "percentage",
+          "value": 50
+        },
+        "SAAS1K": {
+          "discountId": "1e9f6c96-f86a-4ea2-ba74-72f4f379acfb",
+          "discountType": "monetary",
+          "value": 1000
+        }
+      },
+      "kredit": {
+        "KREDIT50": {
+          "discountId": "8d207cf0-d1f3-498d-b469-4ce59b86c290",
+          "discountType": "percentage",
+          "value": 50
+        },
+        "KREDIT1K": {
+          "discountId": "8454b177-6f6a-430c-9231-e04735e60612",
+          "discountType": "monetary",
+          "value": 1000
+        }
+      },
+      "membership": {}
+    },
+    "tiers": {
+      "membership": {
+        "tierId": "7ce53f2a-b055-4a18-a04e-0eaabb3c2151",
+        "name": "Pro Bulanan",
+        "monthPeriod": 1,
+        "amount": 2000
+      },
+      "kredit": {
+        "tierId": "47a680f9-414b-4e93-822e-899f2dae0ffc",
+        "name": "Paket 100 Kredit",
+        "monthPeriod": 1,
+        "amount": 2000,
+        "credit": 100
+      },
+      "saas": {
+        "tierId": "d1db3f30-550d-4881-9eb0-c535559f55eb",
+        "name": "Lisensi Bulanan",
+        "monthPeriod": 1,
+        "amount": 2000
       }
     },
-    "fulfillment": {
-      "FULFILL50": {
-        "discountId": "32543831-ca73-47dd-8dcd-926432342514",
-        "discountType": "percentage",
-        "value": 50
-      },
-      "FULFILL1K": {
-        "discountId": "7d2d9bfe-8594-4d85-a463-bdd5da0a3609",
-        "discountType": "monetary",
-        "value": 1000
-      }
-    },
-    "invoice": {
-      "INVOICE50": {
-        "discountId": "ef635e69-f088-44f2-86ed-2bb421a83ac9",
-        "discountType": "percentage",
-        "value": 50
-      },
-      "INVOICE1K": {
-        "discountId": "7d395e18-7436-438f-885c-7919ed4ae2e4",
-        "discountType": "monetary",
-        "value": 1000
-      }
-    },
-    "qris": {
-      "QRIS50": {
-        "discountId": "735691f7-953d-4b04-8437-7d0b6d0fea5d",
-        "discountType": "percentage",
-        "value": 50
-      },
-      "QRIS1K": {
-        "discountId": "47448bb4-92fd-4734-bddd-8a99e654b794",
-        "discountType": "monetary",
-        "value": 1000
-      }
-    },
-    "cicilan": {
-      "CICILAN50": {
-        "discountId": "f120dc68-0a87-470e-9aca-aac260b6d92c",
-        "discountType": "percentage",
-        "value": 50
-      },
-      "CICILAN1K": {
-        "discountId": "843a7aab-da4d-42c0-8967-d6d59ef57712",
-        "discountType": "monetary",
-        "value": 1000
-      }
-    },
-    "saas": {
-      "SAAS50": {
-        "discountId": "78383e7c-4cc0-4882-a1ca-9d945f1298a1",
-        "discountType": "percentage",
-        "value": 50
-      },
-      "SAAS1K": {
-        "discountId": "1e9f6c96-f86a-4ea2-ba74-72f4f379acfb",
-        "discountType": "monetary",
-        "value": 1000
-      }
-    },
-    "kredit": {
-      "KREDIT50": {
-        "discountId": "8d207cf0-d1f3-498d-b469-4ce59b86c290",
-        "discountType": "percentage",
-        "value": 50
-      },
-      "KREDIT1K": {
-        "discountId": "8454b177-6f6a-430c-9231-e04735e60612",
-        "discountType": "monetary",
-        "value": 1000
-      }
-    },
-    "membership": {}
-  },
-  "tiers": {
-    "membership": {
-      "tierId": "7ce53f2a-b055-4a18-a04e-0eaabb3c2151",
-      "name": "Pro Bulanan",
-      "monthPeriod": 1,
-      "amount": 2000
-    },
-    "kredit": {
-      "tierId": "47a680f9-414b-4e93-822e-899f2dae0ffc",
-      "name": "Paket 100 Kredit",
-      "monthPeriod": 1,
-      "amount": 2000,
-      "credit": 100
-    },
-    "saas": {
-      "tierId": "d1db3f30-550d-4881-9eb0-c535559f55eb",
-      "name": "Lisensi Bulanan",
-      "monthPeriod": 1,
-      "amount": 2000
+    "notes": {
+      "membershipNoCoupon": "Model membership sengaja tanpa kupon: endpoint invoice membership tidak menerima parameter diskon.",
+      "strayTier": "Tier da7e40b3-3d02-4429-8e50-7652a5283a77 pada produk membership tidak berharga dan tidak bisa dijual. V2 tidak punya endpoint hapus tier.",
+      "strayCoupon": "Kupon PROBEOBJECTS terbentuk saat memeriksa skema. V2 tidak punya endpoint hapus kupon.",
+      "creditBlocked": "Seluruh grup endpoint /hl/v2/credit/* mengembalikan 404 di akun ini, walau produknya terbaca normal lewat membership product get. Perlu dibuka dari sisi Mayar.",
+      "deadKreditProduct": "superapp-demo-kredit (8244bf38) dibuat tanpa membershipInfo kredit dan tidak terpakai. Digantikan superapp-demo-kredit-v2.",
+      "unusableCoupons": "KREDIT50, KREDIT1K, SAAS50, SAAS1K tidak bisa dipakai: model bertier menetapkan harga dari tier dan endpoint invoice-nya tidak menerima parameter diskon."
     }
   },
-  "notes": {
-    "membershipNoCoupon": "Model membership sengaja tanpa kupon: endpoint invoice membership tidak menerima parameter diskon.",
-    "strayTier": "Tier da7e40b3-3d02-4429-8e50-7652a5283a77 pada produk membership tidak berharga dan tidak bisa dijual. V2 tidak punya endpoint hapus tier.",
-    "strayCoupon": "Kupon PROBEOBJECTS terbentuk saat memeriksa skema. V2 tidak punya endpoint hapus kupon.",
-    "creditBlocked": "Seluruh grup endpoint /hl/v2/credit/* mengembalikan 404 di akun ini, walau produknya terbaca normal lewat membership product get. Perlu dibuka dari sisi Mayar.",
-    "deadKreditProduct": "superapp-demo-kredit (8244bf38) dibuat tanpa membershipInfo kredit dan tidak terpakai. Digantikan superapp-demo-kredit-v2.",
-    "unusableCoupons": "KREDIT50, KREDIT1K, SAAS50, SAAS1K tidak bisa dipakai: model bertier menetapkan harga dari tier dan endpoint invoice-nya tidak menerima parameter diskon."
-  }
+  "sandbox": {
+    "anchors": {
+      "sekali-bayar": "b9d4f1d8-4795-4312-b8ed-3a20ef890324",
+      "fulfillment": "9ac58aba-35cd-4388-9b16-2daac476fba2",
+      "invoice": "e71fe36d-bc65-4971-85cb-11141e160e7d",
+      "qris": "d294383e-a022-4f03-aa5b-3bd5b95098b1",
+      "cicilan": "b29f4cb0-3d05-43a4-b202-6c8edf2174e0",
+      "membership": "989779f3-46bb-43f9-a8e6-e3f9992ad760"
+    },
+    "tiers": {
+      "membership": "fbc0f7a8-eb82-41b5-bad2-c2a796c39d5d"
+    },
+    "coupons": {
+      "sekali-bayar": [
+        "SEKALI50",
+        "SEKALI1K"
+      ],
+      "fulfillment": [
+        "FULFILL50",
+        "FULFILL1K"
+      ],
+      "invoice": [
+        "INVOICE50",
+        "INVOICE1K"
+      ],
+      "qris": [
+        "QRIS50",
+        "QRIS1K"
+      ],
+      "cicilan": [
+        "CICILAN50",
+        "CICILAN1K"
+      ]
+    }
+  },
+  "_note": "Kode di src/lib/catalog.ts saat ini memakai ID sandbox."
 }

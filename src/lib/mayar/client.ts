@@ -162,13 +162,20 @@ export async function mayarFetchPage<T>(
 }
 
 /**
- * The merchant's public storefront origin.
+ * The origin Mayar serves invoices from, used to expand the bare slugs that
+ * `installments/create` returns.
+ *
+ * This is NOT the storefront origin. Sandbox lists products under
+ * `<merchant>.mayar.shop` but issues invoice links on `<merchant>.myr.lat`;
+ * production uses `<merchant>.myr.id` for both. Taking the origin from the
+ * product listing would therefore build links that 404 in sandbox, so this is
+ * read off an actual invoice link instead.
  *
  * Most endpoints return absolute payment links, but `installments/create`
  * returns each term's `link` as a bare slug. Prefixing has to happen somewhere,
  * and doing it here keeps the guess in one place.
  */
-export const MERCHANT_ORIGIN = "https://faiz-intifada.myr.id"
+export const MERCHANT_ORIGIN = "https://faizintifada.myr.lat"
 
 /** Turns a Mayar payment link into an absolute URL, if it is not one already. */
 export function absoluteMayarLink(link: string): string {
