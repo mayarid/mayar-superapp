@@ -340,3 +340,53 @@ waiting after the lag window.
 **Where does a SaaS license code come from?** No page states how a license code
 is first issued. Resolving this needs a real purchase of a SaaS product, which
 needs a SaaS product to exist first. See finding 6.
+
+## 18. The `/hl/v2/credit/*` group answers 404 on this account
+
+**Date:** 2026-08-20
+
+Every credit endpoint returns `{"statusCode": 404, "messages": "Not Found"}`,
+using the paths printed in the documentation and the same paths the official
+CLI uses:
+
+```
+POST /hl/v2/credit/credit-usage/customer/regist   -> 404
+POST /hl/v2/credit/generate/immutable/checkout    -> 404
+GET  /hl/v2/credit/balance                        -> 404
+```
+
+This is not a bad product id. The product reads back normally through
+`mayar membership product get`, with `status: active`, `type: CREDIT`, and a
+priced tier granting 100 credits for Rp2.000.
+
+It was first assumed to be a configuration gap, because the original CREDIT
+product had been created without any `membershipInfo` credit settings. A second
+product was created with `creditValue`, `isAccumulateCredit`,
+`isAccumulateTopupCredit`, `enableCreditTopup`, `minCreditTopup`, and
+`maxCreditTopup` all set, and it confirmed those values on read. The endpoints
+still answer 404.
+
+The remaining explanation is an account-level entitlement: the credit-wallet
+feature appears not to be switched on for this merchant. That cannot be fixed
+through the API and needs Mayar support.
+
+## 19. Tier-priced models cannot take a coupon
+
+**Date:** 2026-08-20
+
+Membership, SaaS, and credit are one product family — `membershipInfo.type` of
+`MEMBERSHIP`, `SAAS`, or `CREDIT` (finding 9) — and all three are sold through a
+tier whose period carries the price:
+
+```json
+{ "monthPeriod": 1, "amount": 2000, "credit": 100 }
+```
+
+The endpoint that raises their bill,
+`POST /hl/v2/memberships/members/{memberId}/invoice/create`, computes `amount`
+from that tier and accepts no override. `coupons/validate` will happily confirm
+a coupon against these products, but nothing can apply it.
+
+So a coupon is only usable where the app controls the amount it sends:
+`payments/create`, `invoices/create`, `installments/create`, and the QRIS
+amount. Five of the eight billing models, not eight.

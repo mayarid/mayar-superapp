@@ -11,7 +11,7 @@
     "cicilan": "c19b9bd6-974e-4f59-b170-37ea032f5c01",
     "membership": "9b52b22e-1a0c-4fd7-b9c3-c66c234b83f5",
     "saas": "8137866c-72d5-4b4d-891b-921d66916ee3",
-    "kredit": "8244bf38-32c1-4465-93f9-d4fa201a1b5f"
+    "kredit": "f90cbbbd-d5e1-48a2-b591-20489fa1f5c0"
   },
   "coupons": {
     "sekali-bayar": {
@@ -108,7 +108,7 @@
       "amount": 2000
     },
     "kredit": {
-      "tierId": "004425f1-135b-4013-8d7a-8ef4550dc3d7",
+      "tierId": "47a680f9-414b-4e93-822e-899f2dae0ffc",
       "name": "Paket 100 Kredit",
       "monthPeriod": 1,
       "amount": 2000,
@@ -124,6 +124,9 @@
   "notes": {
     "membershipNoCoupon": "Model membership sengaja tanpa kupon: endpoint invoice membership tidak menerima parameter diskon.",
     "strayTier": "Tier da7e40b3-3d02-4429-8e50-7652a5283a77 pada produk membership tidak berharga dan tidak bisa dijual. V2 tidak punya endpoint hapus tier.",
-    "strayCoupon": "Kupon PROBEOBJECTS terbentuk saat memeriksa skema. V2 tidak punya endpoint hapus kupon."
+    "strayCoupon": "Kupon PROBEOBJECTS terbentuk saat memeriksa skema. V2 tidak punya endpoint hapus kupon.",
+    "creditBlocked": "Seluruh grup endpoint /hl/v2/credit/* mengembalikan 404 di akun ini, walau produknya terbaca normal lewat membership product get. Perlu dibuka dari sisi Mayar.",
+    "deadKreditProduct": "superapp-demo-kredit (8244bf38) dibuat tanpa membershipInfo kredit dan tidak terpakai. Digantikan superapp-demo-kredit-v2.",
+    "unusableCoupons": "KREDIT50, KREDIT1K, SAAS50, SAAS1K tidak bisa dipakai: model bertier menetapkan harga dari tier dan endpoint invoice-nya tidak menerima parameter diskon."
   }
 }
