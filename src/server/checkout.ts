@@ -34,8 +34,13 @@ export interface CheckoutOutcome {
   qrUrl?: string
   /** The amount actually charged, including any unique code. */
   charged: number
-  /** Instalment schedule, when the model has one. */
-  schedule?: Array<{ amount: number; dueDate: number; link: string }>
+  /**
+   * Instalment schedule, when the model has one.
+   *
+   * There is no per-term due date to report: the create response carries only
+   * a plan-level day of month, so terms are identified by number instead.
+   */
+  schedule?: Array<{ amount: number; term: number; link: string }>
 }
 
 interface CheckoutInput {
@@ -69,6 +74,25 @@ export async function createCheckout(
   const charged =
     product.model === "qris" ? withUniqueCode(discount.net) : discount.net
 
+  // Matching keys for the models whose endpoints return no usable transaction
+  // id. Every key an order carries has to hold, so more keys mean a narrower
+  // match, never a looser one.
+  //
+  //  - qris   — no identifier of any kind, so the unique amount is the key.
+  //  - kredit — a link and nothing else, so the buyer's email and the exact
+  //             amount together stand in for one.
+  //  - cicilan — the plan's terms carry their own invoice ids, but those are
+  //             not the ids a paid term reports in balance history, so they
+  //             cannot be matched on. Email plus the first term's amount is
+  //             what is left. The amount is filled in after the plan exists,
+  //             because only Mayar decides how the total splits.
+  //  - membership — the bill returns no transaction id either, so it is
+  //             matched the same way, on email plus the tier's amount.
+  const matchesOnEmail =
+    product.model === "kredit" ||
+    product.model === "cicilan" ||
+    product.model === "membership"
+
   await createOrder(db, {
     id: orderId,
     model: product.model,
@@ -80,8 +104,9 @@ export async function createCheckout(
     buyerName: buyer.name,
     buyerEmail: buyer.email,
     buyerMobile: buyer.mobile,
-    matchAmount: product.model === "qris" ? charged : null,
-    matchEmail: product.model === "kredit" ? buyer.email : null,
+    matchAmount:
+      product.model === "qris" || product.model === "kredit" ? charged : null,
+    matchEmail: matchesOnEmail ? buyer.email : null,
   })
 
   const meta = { orderId, model: product.model }
@@ -136,15 +161,25 @@ export async function createCheckout(
       }
       // Instalment terms come back with `link` as a bare slug, unlike every
       // other endpoint, which returns an absolute URL.
-      const first = absoluteMayarLink(plan.invoices[0].link)
-      await attachMayarIds(db, orderId, { mayarId: plan.id, payUrl: first })
+      const firstTerm = plan.invoices[0]
+      const first = absoluteMayarLink(firstTerm.link)
+      // An instalment order is settled by its *first* term, not by the whole
+      // plan. It cannot be otherwise: an order expires after ORDER_TTL_MS,
+      // while the remaining terms fall due months later. So the amount to
+      // watch for is one term's, not the total, and it is only known now
+      // because Mayar decides how the total divides.
+      await attachMayarIds(db, orderId, {
+        mayarId: plan.id,
+        payUrl: first,
+        matchAmount: firstTerm.amount,
+      })
       return {
         orderId,
         payUrl: first,
         charged,
         schedule: plan.invoices.map((invoice) => ({
           amount: invoice.amount,
-          dueDate: invoice.dueDate,
+          term: invoice.index,
           link: absoluteMayarLink(invoice.link),
         })),
       }
@@ -163,8 +198,8 @@ export async function createCheckout(
           customerInfo: buyer,
           membershipMonthlyPeriod: 1,
         })
-        memberId = member.membershipCustomer.memberId
-        memberRecordId = member.membershipCustomer.id
+        memberId = member.memberId
+        memberRecordId = member.id
       } catch (error) {
         if (!(error instanceof MayarApiError)) throw error
         const members = await listMembers(config, product.productId)
@@ -184,10 +219,14 @@ export async function createCheckout(
         memberId,
         product.productId
       )
+      // The bill carries no transaction id, so this model is matched like the
+      // other identifier-less ones: the buyer's email set at creation, plus
+      // the tier's own amount, which is authoritative over anything computed
+      // here because the endpoint takes no amount override.
       await attachMayarIds(db, orderId, {
         mayarId: memberRecordId,
-        transactionId: bill.transactionId,
         payUrl: bill.membershipBillUrl,
+        matchAmount: bill.amount,
       })
       return { orderId, payUrl: bill.membershipBillUrl, charged: bill.amount }
     }

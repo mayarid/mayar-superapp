@@ -30,10 +30,13 @@ export type MatchDecision =
  *    made unique at checkout.
  *  - Credit returns only a link, so its order is matched on the buyer's email
  *    together with the exact amount.
+ *  - Instalments do return per-term invoice ids, but a paid term reports a
+ *    different id in balance history, so those ids are useless here. Such an
+ *    order is matched on the buyer's email and the first term's amount.
  *
- * Both heuristics fail closed. An order is settled only when exactly one
- * payment fits it, and a payment already claimed by a stronger match can never
- * be taken by a weaker one.
+ * Every heuristic fails closed. An order is settled only when exactly one
+ * payment fits it, a payment already claimed by a stronger match can never be
+ * taken by a weaker one, and an order carrying no key at all never matches.
  */
 export function matchPayments(
   pending: Order[],
@@ -73,17 +76,27 @@ export function matchPayments(
       // Nothing older than the order can have paid for it.
       if (item.createdAt < order.created_at) return false
 
+      // An order with no key at all must never match. Without one there is
+      // nothing distinguishing it from every other order of the same price,
+      // and settling it would be a guess wearing the clothes of a match.
+      if (order.match_amount === null && order.match_email === null) {
+        return false
+      }
+
+      // Every key the order carries has to hold. Keys narrow a match, never
+      // widen it, so an order with two is harder to satisfy than one with one.
+      //
       // The money field on these rows is `credit`. There is no `amount`.
-      if (order.match_amount !== null) {
-        return item.credit === order.match_amount
+      if (order.match_amount !== null && item.credit !== order.match_amount) {
+        return false
       }
-      if (order.match_email !== null) {
-        return (
-          item.customer?.email.toLowerCase() ===
-            order.match_email.toLowerCase() && item.credit === order.amount_net
-        )
+      if (
+        order.match_email !== null &&
+        item.customer?.email.toLowerCase() !== order.match_email.toLowerCase()
+      ) {
+        return false
       }
-      return false
+      return true
     })
 
     if (candidates.length === 1) {

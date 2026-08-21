@@ -143,6 +143,7 @@ describe("matching credit by email", () => {
   const credit = order({
     model: "kredit",
     match_email: "Uji@Example.com",
+    match_amount: 2000,
     amount_net: 2000,
   })
 
@@ -166,6 +167,70 @@ describe("matching credit by email", () => {
       },
     })
     expect(matchPayments([credit], [other])).toEqual([])
+  })
+})
+
+describe("matching an instalment by email and first term", () => {
+  // The plan totals 3000 across three terms. What settles the order is the
+  // first term's 1000, not the total, because the rest fall due months after
+  // the order has expired.
+  const cicilan = order({
+    model: "cicilan",
+    match_email: "uji@example.com",
+    match_amount: 1000,
+    amount_net: 3000,
+  })
+
+  it("settles on the first term, not the plan total", () => {
+    const decisions = matchPayments([cicilan], [history({ credit: 1000 })])
+    expect(decisions[0]?.outcome).toBe("paid")
+  })
+
+  it("ignores a payment for the whole plan amount", () => {
+    expect(matchPayments([cicilan], [history({ credit: 3000 })])).toEqual([])
+  })
+
+  it("refuses a term-sized payment from a different buyer", () => {
+    const other = history({
+      credit: 1000,
+      customer: {
+        id: "c2",
+        email: "lain@example.com",
+        name: "Lain",
+        mobile: "0813",
+      },
+    })
+    expect(matchPayments([cicilan], [other])).toEqual([])
+  })
+
+  it("refuses to guess when two equal terms are paid in the window", () => {
+    // Every term costs the same and carries the same email, so a second one
+    // paid before the order settles is genuinely indistinguishable.
+    const decisions = matchPayments(
+      [cicilan],
+      [
+        history({ id: "hist_1", credit: 1000 }),
+        history({ id: "hist_2", credit: 1000 }),
+      ]
+    )
+    expect(decisions).toEqual([
+      { orderId: "ord_1", outcome: "ambiguous", candidates: 2 },
+    ])
+  })
+})
+
+describe("orders with no matching key", () => {
+  it("never matches, however well the amount lines up", () => {
+    // This is the state an instalment order used to be left in: no
+    // transaction id and no fallback key, so nothing could ever settle it.
+    const keyless = order({
+      model: "cicilan",
+      transaction_id: null,
+      match_amount: null,
+      match_email: null,
+      amount_net: 1000,
+    })
+    expect(matchPayments([keyless], [history({ credit: 1000 })])).toEqual([])
   })
 })
 

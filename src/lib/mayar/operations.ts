@@ -29,6 +29,24 @@ import type {
 /** Mayar allows at most 50 results per page. */
 export const MAX_PAGE = 50
 
+/**
+ * Page size for the balance history, which must stay below `MAX_PAGE`.
+ *
+ * `GET /hl/v2/transactions` returns a stale, truncated page once the limit
+ * reaches fifty. Measured on one account within seconds of each other:
+ *
+ *     limit=10  -> 10 rows, newest payment present, hasMore true
+ *     limit=40  -> 40 rows, newest payment present, hasMore true
+ *     limit=50  -> 43 rows, newest two payments MISSING, hasMore false
+ *     limit=100 -> 43 rows, same stale page
+ *
+ * A bigger limit bought fewer and older rows. Because `MAX_PAGE` is fifty, the
+ * reconciler was asking for exactly the value that made it blind to every
+ * payment it was waiting for. Forty is the largest limit still returning a
+ * fresh page. See docs/api-findings.md.
+ */
+export const BALANCE_PAGE = 40
+
 function body(payload: unknown): RequestInit {
   return { method: "POST", body: JSON.stringify(payload) }
 }
@@ -97,17 +115,24 @@ function toQuery(query: Record<string, unknown>): string {
  * A row's `paymentLinkTransactionId` matches an id from a create endpoint, and
  * its money field is `credit`.
  *
- * `status=paid` is not an optimisation, it is required. Without it the endpoint
- * returns a page dominated by old `settled` rows and a payment made seconds ago
- * is not in it. `startAt` and `endAt` are accepted and ignored, so they cannot
- * be used to narrow the page instead.
+ * No `status` filter is sent, and that is deliberate. `status=paid` drops rows
+ * whose own `status` field reads `"paid"` — a `membership_payment` row was
+ * absent from the filtered page for minutes while sitting at the top of the
+ * unfiltered one. Filtering here would therefore hide exactly the payments the
+ * reconciler exists to find. Callers filter on `PAID_STATUSES` instead, which
+ * reads the field rather than trusting the query, and in practice the page
+ * comes back entirely paid anyway.
+ *
+ * `startAt` and `endAt` are accepted and ignored, so they cannot narrow the
+ * page either. The limit is `BALANCE_PAGE`, not `MAX_PAGE`, and that
+ * difference is load bearing — see the constant.
  */
 export function listPaidBalanceHistory(
   config: MayarConfig
 ): Promise<MayarPage<BalanceHistoryItem>> {
   return mayarFetchPage<BalanceHistoryItem>(
     config,
-    `/hl/v2/transactions${toQuery({ limit: MAX_PAGE, status: "paid" })}`
+    `/hl/v2/transactions${toQuery({ limit: BALANCE_PAGE })}`
   )
 }
 

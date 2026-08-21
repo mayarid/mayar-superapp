@@ -206,11 +206,25 @@ export interface CreateInstallmentRequest {
   installment: InstallmentTerms
 }
 
+/**
+ * One term of an instalment plan.
+ *
+ * Note what is *not* here. The response carries no per-term due date, so the
+ * only due information is the plan-level `dueDate` day of month. And `id` is
+ * the invoice's own id, not the payment-link transaction id — a paid term
+ * appears in balance history under a different id entirely, so this cannot be
+ * used to match a payment. See docs/api-findings.md.
+ */
 export interface InstallmentInvoice {
   id: string
+  /** Term number, starting at 1. */
+  index: number
   amount: number
-  dueDate: number
+  interestAmount: number
+  /** Still owed after this term clears. */
+  remainingAmount: number
   status: string
+  /** A bare slug, unlike every other endpoint, which returns a full URL. */
   link: string
 }
 
@@ -244,17 +258,32 @@ export interface RegisterMemberRequest {
   membershipMonthlyPeriod: number
 }
 
+/**
+ * The membership record, returned flat.
+ *
+ * There is no wrapper object around this. `mayarFetch` unwraps the envelope to
+ * `data`, and `data` *is* the member — its own `id` alongside the human-facing
+ * `memberId`. This once declared a `membershipCustomer` wrapper that the API
+ * never sends, which made every membership checkout throw.
+ */
 export interface RegisterMemberResponse {
-  membershipCustomer: {
+  /** Record id, used to reference the membership itself. */
+  id: string
+  /** Short human-facing code, e.g. "V67Q2PE2". This is what bills are raised against. */
+  memberId: string
+  customerId: string
+  membershipTierId: string
+  paymentLinkId: string
+  status: string
+  createdAt: string
+  nextPayment: string | null
+  expiredAt: string | null
+  isLifetimePeriod: boolean | null
+  customer: {
     id: string
-    memberId: string
-    customerId: string
-    membershipTierId: string
-    paymentLinkId: string
-    monthlyPaymentPeriod: number
-    status: string
-    nextPayment: string | null
-    expiredAt: string | null
+    name: string
+    email: string
+    mobile: string
   }
 }
 
@@ -266,13 +295,25 @@ export interface RegisterMemberResponse {
  */
 export interface CreateMembershipInvoiceResponse {
   id: string
-  transactionId: string
-  customerId: string
+  name: string
+  /**
+   * The billing period this bill belongs to, as
+   * `membershipInvoice:<id>:<month>:<year>`. This is what makes the endpoint
+   * idempotent per term — asking again inside the same period returns the bill
+   * already raised for it.
+   */
+  term: string
   membershipTierId: string
   amount: number
   status: string
-  expiredAt: string
+  createdAt: string
   membershipBillUrl: string
+  /**
+   * No transaction id is returned. This once declared one, and because the
+   * field was simply absent rather than wrong, the order was written with an
+   * empty transaction id and could never be matched. The model is matched on
+   * the buyer's email and the bill amount instead.
+   */
 }
 
 /* -------------------------------------------------------------------------- */

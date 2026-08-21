@@ -42,12 +42,24 @@ function Button({
   className,
   variant = "default",
   size = "default",
+  render,
+  nativeButton,
   ...props
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+  // Base UI assumes it is rendering a native <button> and warns when it is
+  // not, because a non-button silently loses form submission and keyboard
+  // activation. Every `render` in this app swaps in an anchor or a router
+  // Link, so the default is answered here rather than at each call site — one
+  // forgotten prop would otherwise cost a control its semantics. A caller that
+  // really does render a <button> can still say so.
+  const rendersNativeButton = nativeButton ?? render === undefined
+
   return (
     <ButtonPrimitive
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
+      render={render}
+      nativeButton={rendersNativeButton}
       {...props}
     />
   )

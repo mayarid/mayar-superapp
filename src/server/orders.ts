@@ -103,7 +103,17 @@ export async function getOrder(
 export async function attachMayarIds(
   db: D1Database,
   id: string,
-  fields: { mayarId?: string; transactionId?: string; payUrl?: string }
+  fields: {
+    mayarId?: string
+    transactionId?: string
+    payUrl?: string
+    /**
+     * Amount the reconciler should watch for, when it is only knowable after
+     * the create call. Instalments need this: Mayar decides how a total splits
+     * into terms, and the first term's amount is what settles the order.
+     */
+    matchAmount?: number
+  }
 ): Promise<void> {
   await db
     .prepare(
@@ -111,13 +121,15 @@ export async function attachMayarIds(
           SET status = 'pending',
               mayar_id = COALESCE(?, mayar_id),
               transaction_id = COALESCE(?, transaction_id),
-              pay_url = COALESCE(?, pay_url)
+              pay_url = COALESCE(?, pay_url),
+              match_amount = COALESCE(?, match_amount)
         WHERE id = ?`
     )
     .bind(
       fields.mayarId ?? null,
       fields.transactionId ?? null,
       fields.payUrl ?? null,
+      fields.matchAmount ?? null,
       id
     )
     .run()
