@@ -451,9 +451,12 @@ exception. A subscription checkout must look the member up and bill the
 existing record, not create a new one. Combined with finding 21, the lookup is
 easy to get wrong.
 
-## 23. Both sandbox hosts are real and interchangeable
+## 23. Both sandbox hosts are real, but interchangeable only under `/hl/v2`
 
-**Date:** 2026-08-20
+**Date:** 2026-08-20. **Narrowed 2026-08-21** — see finding 27. The two hosts
+serve `/hl/v2` identically, as recorded below, but they do **not** both serve
+`/saas/v2`: `api.mayar.io` answers `502 Bad Gateway` there while
+`api.mayar.club` answers normally. Read this finding as being about `/hl/v2`.
 
 Finding 16's neighbour: the V2 reference documents the sandbox as
 `api.mayar.io`, while the official CLI targets `api.mayar.club`. One sandbox API
@@ -570,3 +573,94 @@ not, so a licence check can be built on the software path in the meantime.
 Worth noting how easy this is to misread: with an invented code in the field,
 "failed authentication" looks like the code being rejected. It is not — the
 request never got that far.
+
+---
+
+## 27. `/saas/v2` is not routed on `api.mayar.io` at all
+
+**Date:** 2026-08-21
+**Endpoint:** `POST /saas/v2/license/verify`
+
+Finding 26 reports that `/saas/v2` rejects a key `/hl/v2` accepts. That is
+still reproducible, but only on one of the two sandbox hosts. The same request,
+same key, same second:
+
+```
+api.mayar.io    -> HTTP 502, content-type: text/plain, body "Bad Gateway"
+api.mayar.club  -> HTTP 200, {"statusCode":401,
+                              "messages":"Failed authentication! Please check
+                                          your token authorization."}
+```
+
+`GET /hl/v2/payment-channels` returns 200 on both, so this is not the key and
+not the host being down. The `/saas/v2` group is simply absent from
+`api.mayar.io`'s routing.
+
+Two consequences:
+
+1. **Finding 23 is narrower than written.** The hosts are interchangeable for
+   `/hl/v2` and not for `/saas/v2`.
+2. **Finding 26 must be reproduced against `api.mayar.club`.** Reported against
+   `api.mayar.io` it looks like a gateway outage rather than an authentication
+   bug, which is a weaker and more easily dismissed claim.
+
+A 502 with a `text/plain` body is also worth noting on its own: every other
+failure on these hosts returns a JSON envelope, so a client that assumes JSON
+gets a parse error rather than a status it can act on.
+
+---
+
+## 28. `GET /hl/v2/transactions` returns a stale, truncated page at `limit=50`
+
+**Date:** 2026-08-21
+**Endpoint:** `GET /hl/v2/transactions`
+
+**This is the most consequential finding here.** It silently disabled payment
+reconciliation for every model matched without a transaction id.
+
+Asking for more rows returns fewer rows, and older ones. Measured on one
+account, four requests within seconds of each other:
+
+```
+?limit=10   -> 10 rows, newest payment present, hasMore true
+?limit=25   -> 25 rows, newest payment present, hasMore true
+?limit=40   -> 40 rows, newest payment present, hasMore true
+?limit=50   -> 43 rows, newest two payments MISSING, hasMore false
+?limit=100  -> 43 rows, the same stale page
+```
+
+The cliff is at fifty, which is exactly the documented maximum page size — so
+the value the documentation invites you to use is the one value that breaks.
+`hasMore: false` on that page makes it worse: a client is told there is nothing
+further to fetch, so it cannot even detect the truncation and page around it.
+
+**How it presents.** Not as an error. A payment completes, the buyer sees
+"Transaction Success", and the order never settles. Orders matched on a
+transaction id still clear, because they are confirmed through
+`GET /hl/v2/transactions/{id}` instead — which is why this hid behind four
+working models while every heuristic-matched one silently failed.
+
+**Not general to the API.** `GET /hl/v2/transactions/unpaid?limit=50` returns
+50 rows correctly, and `GET /hl/v2/memberships/members?limit=50` is fine.
+Only the balance-history query is affected.
+
+### 28b. `status=paid` omits rows whose status is `paid`
+
+The same endpoint, filtered, drops rows it should return. A `membership_payment`
+row sat at the top of the unfiltered page with `"status": "paid"` while being
+absent from `?status=paid` for over three minutes:
+
+```
+?limit=10             -> 10 rows, includes 2000 paid membership_payment …427376
+?limit=10&status=paid -> 10 rows, that row absent
+```
+
+Diffing the two pages by row id, the membership row is the only difference.
+Other types — `invoice`, `payment_request` — appear in the filtered page within
+seconds.
+
+**Consequence:** the filter cannot be trusted to mean what the field says, so
+`status` has to be read from each row rather than pushed into the query. Note
+this reverses the advice in finding 17, which recommended `status=paid`
+precisely to avoid stale pages. Both problems are real; the limit is the larger
+one, and filtering client-side avoids the second.
